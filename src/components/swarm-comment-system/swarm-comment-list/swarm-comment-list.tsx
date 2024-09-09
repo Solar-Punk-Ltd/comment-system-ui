@@ -1,9 +1,9 @@
-import { Comment } from "@ethersphere/comment-system";
-import styles from "./swarm-comment-list.module.scss";
+import { Comment } from "../../../libs/comment-system/model/comment.model"
+import styles from "./swarm-comment-list.module.scss"
 
 export interface SwarmCommentSystemProps {
-  comments: Comment[];
-  className?: string;
+  comments: Comment[]
+  className?: string
 }
 
 export default function SwarmCommentList({
@@ -21,5 +21,5 @@ export default function SwarmCommentList({
         </div>
       ))}
     </div>
-  );
+  )
 }

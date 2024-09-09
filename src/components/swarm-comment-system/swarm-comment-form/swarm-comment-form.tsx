@@ -1,24 +1,24 @@
-import { CommentRequest } from "@ethersphere/comment-system";
-import styles from "./swarm-comment-form.module.scss";
-import { useState } from "react";
+import { CommentRequest } from "../../../libs/comment-system/model/comment.model"
+import styles from "./swarm-comment-form.module.scss"
+import { useState } from "react"
 
 export interface SwarmCommentFormProps {
-  loading: boolean;
-  onSubmit: (comment: CommentRequest) => void;
-  className?: string;
+  loading: boolean
+  onSubmit: (comment: CommentRequest) => void
+  className?: string
 }
 
 interface FormElements extends HTMLFormControlsCollection {
-  user: HTMLInputElement;
-  data: HTMLInputElement;
+  user: HTMLInputElement
+  data: HTMLInputElement
 }
 interface CommentFormElement extends HTMLFormElement {
-  readonly elements: FormElements;
+  readonly elements: FormElements
 }
 
 interface FormErrors {
-  user?: string;
-  data?: string;
+  user?: string
+  data?: string
 }
 
 export default function SwarmCommentForm({
@@ -26,33 +26,33 @@ export default function SwarmCommentForm({
   onSubmit,
   className,
 }: SwarmCommentFormProps) {
-  const [errors, setErrors] = useState<FormErrors>({});
+  const [errors, setErrors] = useState<FormErrors>({})
 
   const validate = (value: string): string | undefined => {
     if (!value) {
-      return "This field is required.";
+      return "This field is required."
     }
-  };
+  }
   const hasErrors = (errors: FormErrors): boolean => {
-    return Object.values(errors).some((value) => Boolean(value));
-  };
+    return Object.values(errors).some((value) => Boolean(value))
+  }
 
   const submit = (event: React.FormEvent<CommentFormElement>) => {
-    event.preventDefault();
-    const elements = event.currentTarget.elements;
-    const user = elements.user.value;
-    const data = elements.data.value;
+    event.preventDefault()
+    const elements = event.currentTarget.elements
+    const user = elements.user.value
+    const data = elements.data.value
     const errors: FormErrors = {
       user: validate(user),
       data: validate(data),
-    };
-
-    if (hasErrors(errors)) {
-      return setErrors(errors);
     }
 
-    onSubmit({ user, data });
-  };
+    if (hasErrors(errors)) {
+      return setErrors(errors)
+    }
+
+    onSubmit({ timestamp: Date.now(), data, user })
+  }
 
   return (
     <form
@@ -77,5 +77,5 @@ export default function SwarmCommentForm({
       ></textarea>
       <button disabled={loading}>Submit</button>
     </form>
-  );
+  )
 }
