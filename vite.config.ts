@@ -20,6 +20,11 @@ export default defineConfig({
     //   external: ["react", "react/jsx-runtime"],
     // },
   },
+  resolve: {
+    alias: {
+      '@ethersphere/comment-system': '../comment-system/',
+    },
+  },
   plugins: [
     react(),
     // libInjectCss(),
@@ -34,4 +39,5 @@ export default defineConfig({
       include: ["stream", "util"],
     }),
   ],
+  
 });
