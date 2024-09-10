@@ -9,6 +9,7 @@ interface TabsProps {
   className?: string;
 }
 
+// most likely not needed
 export function Tabs({
   tabs,
   activeTab,

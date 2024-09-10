@@ -3,7 +3,7 @@ import {
   CommentRequest, 
   readComments, 
   writeComment
-} from "@ethersphere/comment-system";
+} from '@ethersphere/comment-system';
 import SwarmCommentList from "./swarm-comment-list/swarm-comment-list";
 import { useEffect, useState } from "react";
 import SwarmCommentForm from "./swarm-comment-form/swarm-comment-form";

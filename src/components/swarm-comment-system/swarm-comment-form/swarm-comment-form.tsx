@@ -1,4 +1,4 @@
-import { CommentRequest } from "../../../libs/comment-system/model/comment.model"
+import { CommentRequest } from '@ethersphere/comment-system'
 import styles from "./swarm-comment-form.module.scss"
 import { useState } from "react"
 

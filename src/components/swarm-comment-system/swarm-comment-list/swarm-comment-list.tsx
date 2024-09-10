@@ -1,4 +1,4 @@
-import { Comment } from "../../../libs/comment-system/model/comment.model"
+import { Comment } from '@ethersphere/comment-system'
 import styles from "./swarm-comment-list.module.scss"
 
 export interface SwarmCommentSystemProps {
