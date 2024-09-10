@@ -20,8 +20,7 @@
     "@ethersphere/bee-js": "^6.4.1",
     "@ethersphere/comment-system": "file:../comment-system",
     "ethers": "^6.8.0",
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0"
+    "react": "^18.3.1"
   },
   "devDependencies": {
     "@ethersphere/bee-js": "^6.4.1",
