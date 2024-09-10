@@ -22,7 +22,7 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      '@ethersphere/comment-system': '../comment-system/',
+      '@ethersphere/comment-system': resolve(__dirname, '../comment-system/dist/index.js'),
     },
   },
   plugins: [

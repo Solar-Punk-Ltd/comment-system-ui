@@ -1,1 +1,1 @@
-export * from "./swarm-comment-system/swarm-comment-system";
+export * from "./swarm-comment-system/SwarmCommentSystem";
