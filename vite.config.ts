@@ -20,6 +20,8 @@ export default defineConfig({
   resolve: {
     alias: {
       '@components': resolve(__dirname, 'src/components'),
+      'react':resolve('./node_modules/react'),
+      'react-dom': resolve('./node_modules/react-dom')
     },
   },
   plugins: [

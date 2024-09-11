@@ -16,6 +16,8 @@
     "dist"
   ],
   "dependencies": {
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
     "@ethersphere/bee-js": "^6.4.1",
     "@ethersphere/comment-system": "file:../comment-system",
     "ethers": "^6.8.0"
