@@ -1,5 +1,4 @@
 import { Comment } from '@ethersphere/comment-system'
-import styles from "./swarm-comment-list.module.scss"
 
 export interface SwarmCommentSystemProps {
   comments: Comment[]
@@ -10,8 +9,9 @@ export default function SwarmCommentList({
   comments,
   className,
 }: SwarmCommentSystemProps) {
+  className // not used
   return (
-    <div className={`${styles.swarmCommentList} ${className}`}>
+    <div className={"${styles.swarmCommentList} ${className}"}>
       {comments.map(({ user, data, timestamp }, index) => (
         <div key={index}>
           <p>

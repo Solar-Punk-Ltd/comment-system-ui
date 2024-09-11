@@ -1,5 +1,4 @@
 import { CommentRequest } from '@ethersphere/comment-system'
-import styles from "./swarm-comment-form.module.scss"
 import { useState } from "react"
 
 export interface SwarmCommentFormProps {
@@ -26,6 +25,7 @@ export default function SwarmCommentForm({
   onSubmit,
   className,
 }: SwarmCommentFormProps) {
+  className // not used
   const [errors, setErrors] = useState<FormErrors>({})
 
   const validate = (value: string): string | undefined => {
@@ -56,12 +56,12 @@ export default function SwarmCommentForm({
 
   return (
     <form
-      className={`${styles["swarm-comment-form"]} ${className}`}
+      className={'${styles["swarm-comment-form"]} ${className}'}
       onSubmit={submit}
     >
       <h6>Add comment:</h6>
       <input
-        className={errors.user && styles["field-error"]}
+        className={errors.user && 'styles["field-error"]'}
         onChange={() => setErrors({ ...errors, user: undefined })}
         type="text"
         name="user"
@@ -69,7 +69,7 @@ export default function SwarmCommentForm({
         disabled={loading}
       />
       <textarea
-        className={errors.data && styles["field-error"]}
+        className={errors.data && 'styles["field-error"]'}
         onChange={() => setErrors({ ...errors, data: undefined })}
         name="data"
         rows={5}
