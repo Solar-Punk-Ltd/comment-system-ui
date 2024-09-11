@@ -16,18 +16,14 @@ export default defineConfig({
       name: 'SwarmCommentSystem',
       fileName: (format) => `index.${format}.js`
     },
-    // rollupOptions: {
-    //   external: ["react", "react/jsx-runtime"],
-    // },
   },
   resolve: {
     alias: {
-      '@ethersphere/comment-system': resolve(__dirname, '../comment-system/dist/index.js'),
+      '@components': resolve(__dirname, 'src/components'),
     },
   },
   plugins: [
     react(),
-    // libInjectCss(),
     dts({
       exclude: [
         resolve(__dirname, "src/main.tsx"),
@@ -35,9 +31,7 @@ export default defineConfig({
       ],
     }),
     nodePolyfills({
-      // To add only specific polyfills, add them here. If no option is passed, adds all polyfills
       include: ["stream", "util"],
     }),
   ],
-  
 });
