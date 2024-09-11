@@ -4,7 +4,6 @@ import { useState } from "react"
 export interface SwarmCommentFormProps {
   loading: boolean
   onSubmit: (comment: CommentRequest) => void
-  className?: string
 }
 
 interface FormElements extends HTMLFormControlsCollection {
@@ -22,10 +21,8 @@ interface FormErrors {
 
 export default function SwarmCommentForm({
   loading,
-  onSubmit,
-  className,
+  onSubmit
 }: SwarmCommentFormProps) {
-  className // not used
   const [errors, setErrors] = useState<FormErrors>({})
 
   const validate = (value: string): string | undefined => {
@@ -56,12 +53,12 @@ export default function SwarmCommentForm({
 
   return (
     <form
-      className={'${styles["swarm-comment-form"]} ${className}'}
+      className={"swarm-comment-system-comment-form"}
       onSubmit={submit}
     >
       <h6>Add comment:</h6>
       <input
-        className={errors.user && 'styles["field-error"]'}
+        className={errors.user && "swarm-comment-system-field-error"}
         onChange={() => setErrors({ ...errors, user: undefined })}
         type="text"
         name="user"
@@ -69,7 +66,7 @@ export default function SwarmCommentForm({
         disabled={loading}
       />
       <textarea
-        className={errors.data && 'styles["field-error"]'}
+        className={errors.data && "swarm-comment-system-field-error"}
         onChange={() => setErrors({ ...errors, data: undefined })}
         name="data"
         rows={5}

@@ -22,18 +22,11 @@ export interface SwarmCommentSystemProps {
   beeDebugApiUrl?: string;  // not needed
   approvedFeedAddress?: string; // not needed, signer.address
   privateKey: string;
-  signer: Signer,
-  classes?: {
-    wrapper?: string;
-    form?: string;
-    tabs?: string;
-    comments?: string;
-  };
+  signer: Signer
 }
 
 
 export function SwarmCommentSystem(props: SwarmCommentSystemProps) {
-  const { classes } = props;
   const { stamp, topic, beeApiUrl, privateKey, signer } = props;
   const bee = new Bee(beeApiUrl);
   const topicHex: Topic = bee.makeFeedTopic(topic);
@@ -136,23 +129,21 @@ export function SwarmCommentSystem(props: SwarmCommentSystemProps) {
 
   if (error) {
     return (
-      <div className={classes?.wrapper}>
+      <div className={"swarm-comment-system-wrapper"}>
           Error loading comments
       </div>
     );
   }
 
   return (
-    <div className={classes?.wrapper}>
+    <div className={"swarm-comment-system-wrapper"}>
 
       <SwarmCommentForm
-        className={classes?.form}
         onSubmit={sendComment}
         loading={loading || formLoading}
       />
 
       <SwarmCommentList 
-        className={classes?.comments}
         comments={comments}
       />
 

@@ -2,16 +2,13 @@ import { Comment } from '@ethersphere/comment-system'
 
 export interface SwarmCommentSystemProps {
   comments: Comment[]
-  className?: string
 }
 
 export default function SwarmCommentList({
-  comments,
-  className,
+  comments
 }: SwarmCommentSystemProps) {
-  className // not used
   return (
-    <div className={"${styles.swarmCommentList} ${className}"}>
+    <div className={"swarm-comment-system-comment-list"}>
       {comments.map(({ user, data, timestamp }, index) => (
         <div key={index}>
           <p>
