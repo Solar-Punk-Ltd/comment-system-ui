@@ -26,15 +26,18 @@ export interface SwarmCommentSystemProps {
   username: string;
 }
 
-export const SwarmCommentSystem: React.FC<SwarmCommentSystemProps> = (
-  props
-) => {
-  const { stamp, topic, beeApiUrl, privateKey, signer, username } = props;
+export const SwarmCommentSystem: React.FC<SwarmCommentSystemProps> = ({
+  stamp,
+  topic,
+  beeApiUrl,
+  privateKey,
+  signer,
+  username,
+}) => {
   const bee = new Bee(beeApiUrl);
   const topicHex: Topic = bee.makeFeedTopic(topic);
   const [comments, setComments] = useState<Comment[] | null>(null);
   const [loading, setLoading] = useState(true);
-  const [formLoading, setFormLoading] = useState(false);
   const [error, setError] = useState<unknown | null>(null);
 
   /** If the room already exists, it will load the comments,
@@ -42,7 +45,7 @@ export const SwarmCommentSystem: React.FC<SwarmCommentSystemProps> = (
   async function init() {
     const isRetrievable = await loadComments();
     if (!isRetrievable) {
-      createFeed();
+      await createFeed();
     }
   }
 
@@ -67,6 +70,7 @@ export const SwarmCommentSystem: React.FC<SwarmCommentSystemProps> = (
       setLoading(false);
     } catch (e) {
       console.error("feed gen error", e);
+      setError(false);
     }
   }
 
@@ -90,6 +94,7 @@ export const SwarmCommentSystem: React.FC<SwarmCommentSystemProps> = (
       isRetrievable = true;
     } catch (error) {
       console.error(error);
+      setError(error);
     } finally {
       setLoading(false);
     }
@@ -99,8 +104,6 @@ export const SwarmCommentSystem: React.FC<SwarmCommentSystemProps> = (
 
   const sendComment = async (comment: CommentRequest) => {
     try {
-      setFormLoading(true);
-
       const newComment = await writeComment(comment, {
         stamp,
         identifier: topicHex,
@@ -116,14 +119,8 @@ export const SwarmCommentSystem: React.FC<SwarmCommentSystemProps> = (
     } catch (error) {
       console.error("Error while sending comments: ", error);
       setError(error);
-    } finally {
-      setFormLoading(false);
     }
   };
-
-  if (!comments) {
-    return <div>Loading comments...</div>;
-  }
 
   if (error) {
     return (
@@ -135,12 +132,8 @@ export const SwarmCommentSystem: React.FC<SwarmCommentSystemProps> = (
 
   return (
     <div className={"swarm-comment-system-wrapper"}>
-      <SwarmCommentList comments={comments} />
-      <SwarmCommentInput
-        nickname={username}
-        loading={loading || formLoading}
-        onSubmit={sendComment}
-      />
+      <SwarmCommentList comments={comments} loading={loading} />
+      <SwarmCommentInput username={username} onSubmit={sendComment} />
     </div>
   );
 };

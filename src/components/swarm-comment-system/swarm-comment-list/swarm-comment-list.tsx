@@ -4,11 +4,15 @@ import SwarmComment from "./swarm-comment/swarm-comment";
 import { Comment } from "@solarpunkltd/comment-system";
 
 export interface SwarmCommentSystemProps {
-  comments: Comment[];
+  comments: Comment[] | null;
+  loading: boolean;
 }
 
-const SwarmCommentList: React.FC<SwarmCommentSystemProps> = ({ comments }) => {
-  if (comments.length === 0) {
+const SwarmCommentList: React.FC<SwarmCommentSystemProps> = ({
+  comments,
+  loading,
+}) => {
+  if (!comments || comments.length === 0) {
     return (
       <div
         className="swarm-comment-system-comment-list__no-comments"
@@ -21,8 +25,14 @@ const SwarmCommentList: React.FC<SwarmCommentSystemProps> = ({ comments }) => {
           color: "#333333",
         }}
       >
-        <p>{"There’s no comment yet."}</p>
-        <p>{"Start the conversation!"}</p>
+        {loading ? (
+          <p>Loading comments...</p>
+        ) : (
+          <>
+            <p>There are no comments yet.</p>
+            <p>Start the conversation!"</p>
+          </>
+        )}
       </div>
     );
   }

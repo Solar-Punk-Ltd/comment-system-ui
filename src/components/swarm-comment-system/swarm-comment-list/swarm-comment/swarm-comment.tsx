@@ -37,7 +37,7 @@ const SwarmComment: React.FC<CommentRequest> = ({ user, data, timestamp }) => {
           flexDirection: "column",
           justifyContent: "left",
           textAlign: "left",
-          // p { margin: "0", }
+          // p { margin: "0", },
         }}
       >
         <div
@@ -56,22 +56,21 @@ const SwarmComment: React.FC<CommentRequest> = ({ user, data, timestamp }) => {
             style={{
               fontFamily: "Inter",
               fontSize: "12px",
+              padding: "0 5px",
             }}
           >
             {user}
           </p>
-          {true && (
-            <p
-              className="swarm-comment__right-side__name-and-time__time"
-              style={{
-                fontFamily: "Public Sans, Inter",
-                fontSize: "12px",
-                marginLeft: "16px !important",
-              }}
-            >
-              {formatTime(timestamp)}
-            </p>
-          )}
+          <p
+            className="swarm-comment__right-side__name-and-time__time"
+            style={{
+              fontFamily: "Public Sans, Inter",
+              fontSize: "12px",
+              marginLeft: "16px !important",
+            }}
+          >
+            {formatTime(timestamp)}
+          </p>
         </div>
 
         <p
