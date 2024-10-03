@@ -1,33 +1,35 @@
-import { 
-  Comment, 
-  CommentRequest, 
-  readComments, 
-  writeComment
-} from '@ethersphere/comment-system';
+import {
+  Comment,
+  CommentRequest,
+  readComments,
+  writeComment,
+} from "@solarpunkltd/comment-system";
 import SwarmCommentList from "./swarm-comment-list/swarm-comment-list";
 import { useEffect, useState } from "react";
-import SwarmCommentForm from "./swarm-comment-form/swarm-comment-form";
+import SwarmCommentInput from "../swarm-comment-input/swarm-comment-input";
 import { Bee, Signer, Topic } from "@ethersphere/bee-js";
 
 /**
  * stamp - Postage stamp ID. If ommitted a first available stamp will be used.
- * identifier - Resource identifier. If not sepcified it's calculated from bzz path.
- * beeApiUrl - Bee API URL, default http://localhost:1633
- * beeDebugApiUrl - Bee Debug API URL, default http://localhost:1635
+ * topic - Comment topic
+ * beeApiUrl - Bee API URL
+ * privateKey - Private key of the user
+ * signer - Signer object
+ * username - Nickname of the user
  */
 export interface SwarmCommentSystemProps {
   stamp: string;
   topic: string;
   beeApiUrl: string;
-  beeDebugApiUrl?: string;  // not needed
-  approvedFeedAddress?: string; // not needed, signer.address
   privateKey: string;
-  signer: Signer
+  signer: Signer;
+  username: string;
 }
 
-
-export function SwarmCommentSystem(props: SwarmCommentSystemProps) {
-  const { stamp, topic, beeApiUrl, privateKey, signer } = props;
+export const SwarmCommentSystem: React.FC<SwarmCommentSystemProps> = (
+  props
+) => {
+  const { stamp, topic, beeApiUrl, privateKey, signer, username } = props;
   const bee = new Bee(beeApiUrl);
   const topicHex: Topic = bee.makeFeedTopic(topic);
   const [comments, setComments] = useState<Comment[] | null>(null);
@@ -35,19 +37,18 @@ export function SwarmCommentSystem(props: SwarmCommentSystemProps) {
   const [formLoading, setFormLoading] = useState(false);
   const [error, setError] = useState<unknown | null>(null);
 
+  /** If the room already exists, it will load the comments,
+   *  otherwise, it will create the room */
+  async function init() {
+    const isRetrievable = await loadComments();
+    if (!isRetrievable) {
+      createFeed();
+    }
+  }
 
   useEffect(() => {
     init();
   }, []);
-
-  /** If the room already exists, it will load the messages,
-   *  otherwise, it will create the room */
-  async function init() {
-    const retrievable =  await bee.isFeedRetrievable('sequence', signer.address, topicHex);
-    
-    if (retrievable) loadComments();
-    else createFeed();
-  }
 
   // Will create a feed, with topic (room-name)
   async function createFeed() {
@@ -55,9 +56,9 @@ export function SwarmCommentSystem(props: SwarmCommentSystemProps) {
       console.info("Feed does not exist. Creating feed...");
 
       const feedReference = await bee.createFeedManifest(
-        stamp, 
-        'sequence', 
-        topicHex, 
+        stamp,
+        "sequence",
+        topicHex,
         signer.address
       );
 
@@ -70,7 +71,8 @@ export function SwarmCommentSystem(props: SwarmCommentSystemProps) {
   }
 
   // Will load comments for the given topic (which is the room-name)
-  const loadComments = async () => {
+  const loadComments = async (): Promise<boolean> => {
+    let isRetrievable = false;
     try {
       setLoading(true);
 
@@ -80,48 +82,44 @@ export function SwarmCommentSystem(props: SwarmCommentSystemProps) {
         signer,
         beeApiUrl,
         approvedFeedAddress: signer.address as unknown as string,
-        privateKey
+        privateKey,
       });
 
-      console.log("readed comments: ", comments)
+      console.log("read comments: ", comments);
       setComments(comments);
+      isRetrievable = true;
     } catch (error) {
       console.error(error);
     } finally {
       setLoading(false);
     }
+
+    return isRetrievable;
   };
 
-  // Sends a message to the room
   const sendComment = async (comment: CommentRequest) => {
     try {
       setFormLoading(true);
-      
-      const newComment = await writeComment(
-        comment, {
-          stamp,
-          identifier: topicHex,
-          signer,
-          beeApiUrl,
-          privateKey
-        }
-      );
 
-      if (!newComment) throw "Comment write failed."
-      console.log("Write result ", newComment)
+      const newComment = await writeComment(comment, {
+        stamp,
+        identifier: topicHex,
+        signer,
+        beeApiUrl,
+        privateKey,
+      });
 
-      setComments([
-        ...(comments as Comment[]),
-        newComment,
-      ]);
+      if (!newComment) throw "Comment write failed.";
+      console.log("Write result ", newComment);
+
+      setComments([...(comments as Comment[]), newComment]);
     } catch (error) {
-      console.error("Error while sending comments: ", error)
-      setError(error)
+      console.error("Error while sending comments: ", error);
+      setError(error);
     } finally {
       setFormLoading(false);
     }
   };
-
 
   if (!comments) {
     return <div>Loading comments...</div>;
@@ -130,23 +128,19 @@ export function SwarmCommentSystem(props: SwarmCommentSystemProps) {
   if (error) {
     return (
       <div className={"swarm-comment-system-wrapper"}>
-          Error loading comments
+        Error loading comments
       </div>
     );
   }
 
   return (
     <div className={"swarm-comment-system-wrapper"}>
-
-      <SwarmCommentForm
-        onSubmit={sendComment}
+      <SwarmCommentList comments={comments} />
+      <SwarmCommentInput
+        nickname={username}
         loading={loading || formLoading}
+        onSubmit={sendComment}
       />
-
-      <SwarmCommentList 
-        comments={comments}
-      />
-
     </div>
   );
-}
+};
