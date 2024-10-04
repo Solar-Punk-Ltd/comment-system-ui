@@ -15,10 +15,11 @@
   ],
   "dependencies": {
     "@ethersphere/bee-js": "^6.4.1",
-    "solarpunk-comment-system": "1.1.0",
+    "@solarpunkltd/comment-system": "^1.1.1",
     "ethers": "^6.8.0",
     "react": "^18.3.1",
-    "react-dom": "^18.3.1"
+    "react-dom": "^18.3.1",
+    "vite-plugin-node-polyfills": "^0.22.0"
   },
   "devDependencies": {
     "@ethersphere/bee-js": "^6.4.1",
@@ -27,12 +28,14 @@
     "@types/react-dom": "^18.2.7",
     "@typescript-eslint/eslint-plugin": "^6.0.0",
     "@typescript-eslint/parser": "^6.0.0",
+    "@vitejs/plugin-react": "^4.3.1",
     "eslint": "^8.45.0",
     "eslint-plugin-react-hooks": "^4.6.0",
     "eslint-plugin-react-refresh": "^0.4.3",
     "ethers": "^6.8.0",
-    "sass": "^1.69.5",
-    "typescript": "^5.0.2"
+    "sass": "^1.77.8",
+    "typescript": "^5.0.2",
+    "vite": "^5.4.8"
   },
   "peerDependencies": {
     "react": "^18.3.1",
