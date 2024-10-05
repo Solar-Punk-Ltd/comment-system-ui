@@ -11,9 +11,8 @@ import { Bee, Signer, Topic } from "@ethersphere/bee-js";
 
 /**
  * stamp - Postage stamp ID. If ommitted a first available stamp will be used.
- * topic - Comment topic
+ * topic - Comment topic that is used as the identifier
  * beeApiUrl - Bee API URL
- * privateKey - Private key of the user
  * signer - Signer object
  * username - Nickname of the user
  */
@@ -21,7 +20,6 @@ export interface SwarmCommentSystemProps {
   stamp: string;
   topic: string;
   beeApiUrl: string;
-  privateKey: string;
   signer: Signer;
   username: string;
 }
@@ -30,7 +28,6 @@ export const SwarmCommentSystem: React.FC<SwarmCommentSystemProps> = ({
   stamp,
   topic,
   beeApiUrl,
-  privateKey,
   signer,
   username,
 }) => {
@@ -86,7 +83,6 @@ export const SwarmCommentSystem: React.FC<SwarmCommentSystemProps> = ({
         signer,
         beeApiUrl,
         approvedFeedAddress: signer.address as unknown as string,
-        privateKey,
       });
 
       console.log("read comments: ", comments);
@@ -109,7 +105,6 @@ export const SwarmCommentSystem: React.FC<SwarmCommentSystemProps> = ({
         identifier: topicHex,
         signer,
         beeApiUrl,
-        privateKey,
       });
 
       if (!newComment) throw "Comment write failed.";
