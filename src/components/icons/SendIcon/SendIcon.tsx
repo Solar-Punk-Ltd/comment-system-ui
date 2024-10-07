@@ -1,5 +1,5 @@
 import React from "react";
-// import "./SendIcon.scss";
+import "./SendIcon.scss";
 
 interface SendIconProps {
   color?: string;
@@ -8,16 +8,7 @@ interface SendIconProps {
 
 const SendIcon: React.FC<SendIconProps> = ({ color, backgroundColor }) => {
   return (
-    <div
-      className="send-icon"
-      style={{
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center",
-        width: "24px",
-        height: "16px",
-      }}
-    >
+    <div className="send-icon">
       <svg
         width="16"
         height="24"

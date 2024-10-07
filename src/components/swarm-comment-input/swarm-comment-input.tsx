@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import SendIcon from "../icons/SendIcon/SendIcon";
-// import "./swarm-comment-input.scss";
+import "./swarm-comment-input.scss";
 import { CommentRequest } from "@solarpunkltd/comment-system";
 
 type FlavoredType<Type, Name> = Type & {
@@ -47,26 +47,12 @@ const SwarmCommentInput: React.FC<SwarmCommentInputProps> = ({
     setCommentToSend("");
     setSending(false);
   };
-  // TODO: processing style
+
   return (
     <div
       className={
         sending ? "swarm-comment-input__processing" : "swarm-comment-input"
       }
-      style={{
-        display: "flex",
-        flexDirection: "row",
-        margin: "8px 16px 8px 16px",
-        justifyContent: "space-between",
-        border: "1px solid #D4D5DD",
-        borderRadius: "8px",
-        height: "32px",
-        position: "relative",
-        bottom: "0",
-        width: "100%",
-        boxSizing: "border-box",
-        left: "0",
-      }}
     >
       {sending ? (
         <>{"Sending comment..."}</>
@@ -77,21 +63,11 @@ const SwarmCommentInput: React.FC<SwarmCommentInputProps> = ({
             onChange={(e) => setCommentToSend(e.target.value)}
             onKeyDown={handleKeyDown}
             className="swarm-comment-input__input"
-            style={{
-              flexGrow: "1",
-              border: "none",
-              margin: "3px",
-            }}
           />
           <button
             onClick={sendComment}
             className="swarm-comment-input__send-button"
             disabled={sending}
-            style={{
-              border: "none",
-              backgroundColor: "transparent",
-              marginRight: "4px",
-            }}
           >
             <SendIcon />
           </button>

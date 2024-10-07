@@ -128,7 +128,9 @@ export const SwarmCommentSystem: React.FC<SwarmCommentSystemProps> = ({
   return (
     <div className={"swarm-comment-system-wrapper"}>
       <SwarmCommentList comments={comments} loading={loading} />
-      <SwarmCommentInput username={username} onSubmit={sendComment} />
+      {!loading && (
+        <SwarmCommentInput username={username} onSubmit={sendComment} />
+      )}
     </div>
   );
 };

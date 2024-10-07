@@ -1,5 +1,5 @@
 import React from "react";
-// import "./swarm-comment-list.scss";
+import "./swarm-comment-list.scss";
 import SwarmComment from "./swarm-comment/swarm-comment";
 import { Comment } from "@solarpunkltd/comment-system";
 
@@ -14,17 +14,7 @@ const SwarmCommentList: React.FC<SwarmCommentSystemProps> = ({
 }) => {
   if (!comments || comments.length === 0) {
     return (
-      <div
-        className="swarm-comment-system-comment-list__no-comments"
-        style={{
-          alignContent: "center",
-          fontFamily: "Public Sans",
-          fontSize: "16px",
-          lineHeight: "20px",
-          letterSpacing: "0.5%",
-          color: "#333333",
-        }}
-      >
+      <div className="swarm-comment-system-comment-list__no-comment">
         {loading ? (
           <p>Loading comments...</p>
         ) : (
@@ -38,14 +28,7 @@ const SwarmCommentList: React.FC<SwarmCommentSystemProps> = ({
   }
 
   return (
-    <div
-      className="swarm-comment-system-comment-list"
-      style={{
-        textAlign: "center",
-        flexGrow: "1",
-        overflow: "scroll",
-      }}
-    >
+    <div className="swarm-comment-system-comment-list">
       {comments.map((msg, ix) => (
         <SwarmComment
           data={msg.data}

@@ -1,4 +1,4 @@
-#swarm-comment-input {
+.swarm-comment-input {
     display: flex;
     flex-direction: row;
     margin: 8px 16px 8px 16px;
@@ -6,6 +6,11 @@
     border: 1px solid #D4D5DD;
     border-radius: 8px;
     height: 32px;
+    position: relative;
+    bottom: 0;
+    width: 100%;
+    box-sizing: border-box;
+    left: 0;
 }
 
 .swarm-comment-input__input {
