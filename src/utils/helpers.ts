@@ -45,3 +45,10 @@ export function isSameDay(firstDate: Date, secondDate: Date) {
     firstDate.getFullYear() === secondDate.getFullYear()
   );
 }
+
+export function isEmpty(obj?: object) {
+  if (!obj) {
+    return true;
+  }
+  return Object.keys(obj).length === 0;
+}

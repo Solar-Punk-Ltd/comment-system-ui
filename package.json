@@ -15,14 +15,13 @@
     "dist"
   ],
   "dependencies": {
-    "@ethersphere/bee-js": "^6.4.1",
+    "@ethersphere/bee-js": "^8.1.0",
     "@solarpunkltd/comment-system": "^1.1.1",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "vite-plugin-node-polyfills": "^0.22.0"
   },
   "devDependencies": {
-    "@ethersphere/bee-js": "^6.4.1",
     "@types/node": "^20.8.10",
     "@types/react": "^18.2.15",
     "@types/react-dom": "^18.2.7",
@@ -30,7 +29,8 @@
     "@typescript-eslint/parser": "^6.0.0",
     "@vitejs/plugin-react": "^4.3.1",
     "copyfiles": "^2.4.1",
-    "eslint": "^8.45.0",
+    "@eslint/js": "^9.9.0",
+    "eslint": "^8.57.0",
     "eslint-plugin-react-hooks": "^4.6.0",
     "eslint-plugin-react-refresh": "^0.4.3",
     "ethers": "^6.13.3",

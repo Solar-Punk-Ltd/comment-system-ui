@@ -1,13 +1,18 @@
+import { useEffect, useState } from "react";
+import { Bee, Signer, Topic } from "@ethersphere/bee-js";
 import {
   Comment,
   CommentRequest,
-  readComments,
+  LatestComment,
+  LastNComments,
+  readCommentsAsync,
+  readLatestComment,
   writeComment,
 } from "@solarpunkltd/comment-system";
+import "./swarm-comment-system.scss";
 import SwarmCommentList from "./swarm-comment-list/swarm-comment-list";
-import { useEffect, useState } from "react";
 import SwarmCommentInput from "../swarm-comment-input/swarm-comment-input";
-import { Bee, Signer, Topic } from "@ethersphere/bee-js";
+import { isEmpty } from "../../utils/helpers";
 
 /**
  * stamp - Postage stamp ID. If ommitted a first available stamp will be used.
@@ -15,6 +20,10 @@ import { Bee, Signer, Topic } from "@ethersphere/bee-js";
  * beeApiUrl - Bee API URL
  * signer - Signer object
  * username - Nickname of the user
+ * startIx - start index to load comments in the feed
+ * endIx -  end index for loading comments in the feed
+ * onComment - callback for comment events
+ * onRead - callback for read events
  */
 export interface SwarmCommentSystemProps {
   stamp: string;
@@ -22,7 +31,15 @@ export interface SwarmCommentSystemProps {
   beeApiUrl: string;
   signer: Signer;
   username: string;
+  preloadedCommnets?: Comment[];
+  startIx?: number;
+  endIx?: number;
+  onComment?: (newComment: Comment, end: number) => void;
+  onRead?: (start: number) => void;
 }
+
+// TODO: make max as prop
+const defaultNumOfComments = 9;
 
 export const SwarmCommentSystem: React.FC<SwarmCommentSystemProps> = ({
   stamp,
@@ -30,72 +47,71 @@ export const SwarmCommentSystem: React.FC<SwarmCommentSystemProps> = ({
   beeApiUrl,
   signer,
   username,
+  startIx,
+  endIx,
+  preloadedCommnets,
+  onComment,
+  onRead,
 }) => {
   const bee = new Bee(beeApiUrl);
   const topicHex: Topic = bee.makeFeedTopic(topic);
-  const [comments, setComments] = useState<Comment[] | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<unknown | null>(null);
+  const [comments, setComments] = useState<Comment[]>([]);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [error, setError] = useState<boolean>(false);
+  const [currentStartIx, setCurrentStartIx] = useState<number>(startIx || 0);
+  const [currentEndIx, setCurrentEndIx] = useState<number>(endIx || 0);
 
   /** If the room already exists, it will load the comments,
    *  otherwise, it will create the room */
   async function init() {
-    const isRetrievable = await loadComments();
-    if (!isRetrievable) {
-      await createFeed();
-    }
+    await loadComments();
   }
 
   useEffect(() => {
-    init();
+    if (preloadedCommnets) {
+      console.log(`pre-loading comments for topic: ${topic}`);
+      setComments(preloadedCommnets);
+    } else {
+      init();
+    }
   }, []);
 
-  // Will create a feed, with topic (room-name)
-  async function createFeed() {
-    try {
-      console.info("Feed does not exist. Creating feed...");
-
-      const feedReference = await bee.createFeedManifest(
-        stamp,
-        "sequence",
-        topicHex,
-        signer.address
-      );
-
-      console.info(`Created feed with reference ${feedReference.reference}`);
-      setComments([]);
-      setLoading(false);
-    } catch (e) {
-      console.error("feed gen error", e);
-      setError(false);
-    }
-  }
-
   // Will load comments for the given topic (which is the room-name)
-  const loadComments = async (): Promise<boolean> => {
-    let isRetrievable = false;
+  const loadComments = async () => {
     try {
       setLoading(true);
-
-      const comments = await readComments({
+      const newComments = await loadLastNComments(
         stamp,
-        identifier: topicHex,
+        topic,
         signer,
         beeApiUrl,
-        approvedFeedAddress: signer.address as unknown as string,
-      });
+        defaultNumOfComments
+      );
 
-      console.log("read comments: ", comments);
-      setComments(comments);
-      isRetrievable = true;
-    } catch (error) {
-      console.error(error);
-      setError(error);
+      if (!isEmpty(newComments)) {
+        const tmpComments: Comment[] = [...comments].concat(
+          newComments.comments
+        );
+        console.log("loading comments success: ", tmpComments);
+        setComments(tmpComments);
+        // TOOD: review if indexes are needed, if yes, than start can be end - maxnum
+        const newStartIx =
+          newComments.nextIndex - defaultNumOfComments > 0
+            ? newComments.nextIndex - defaultNumOfComments
+            : 0;
+        setCurrentStartIx(newStartIx);
+        setCurrentEndIx(newComments.nextIndex);
+        setError(false);
+        if (onRead) {
+          onRead(newStartIx);
+        }
+      }
+    } catch (err) {
+      console.log("loading comments error: ", err);
+      setError(true);
     } finally {
       setLoading(false);
     }
-
-    return isRetrievable;
   };
 
   const sendComment = async (comment: CommentRequest) => {
@@ -107,13 +123,21 @@ export const SwarmCommentSystem: React.FC<SwarmCommentSystemProps> = ({
         beeApiUrl,
       });
 
-      if (!newComment) throw "Comment write failed.";
+      if (!newComment) {
+        throw "Comment write failed.";
+      }
       console.log("Write result ", newComment);
 
       setComments([...(comments as Comment[]), newComment]);
-    } catch (error) {
-      console.error("Error while sending comments: ", error);
-      setError(error);
+      const newEndIx = currentEndIx + 1;
+      setCurrentEndIx(newEndIx);
+      if (onComment) {
+        onComment(newComment, newEndIx);
+      }
+      setError(false);
+    } catch (err) {
+      console.log("sendComment error: ", err);
+      setError(true);
     }
   };
 
@@ -133,4 +157,82 @@ export const SwarmCommentSystem: React.FC<SwarmCommentSystemProps> = ({
       )}
     </div>
   );
+};
+
+export const loadLatestComment = async (
+  stamp: string,
+  topic: string,
+  signer: Signer,
+  beeApiUrl: string
+): Promise<LatestComment> => {
+  const bee = new Bee(beeApiUrl);
+  const topicHex: Topic = bee.makeFeedTopic(topic);
+  let latestComment: LatestComment;
+  try {
+    latestComment = await readLatestComment({
+      stamp: stamp,
+      identifier: topicHex,
+      signer: signer,
+      beeApiUrl: beeApiUrl,
+      approvedFeedAddress: signer.address as unknown as string,
+    });
+
+    console.log(
+      `loaded latest comment for topic ${topic} success: ${latestComment}`
+    );
+  } catch (err) {
+    console.log("loading latest comment error: ", err);
+    return {} as LatestComment;
+  }
+
+  return latestComment;
+};
+
+export const loadLastNComments = async (
+  stamp: string,
+  topic: string,
+  signer: Signer,
+  beeApiUrl: string,
+  numOfComments: number
+): Promise<LastNComments> => {
+  let lastNComments = {} as LastNComments;
+  let comments = {} as Comment[];
+  try {
+    const latestComment = await loadLatestComment(
+      stamp,
+      topic,
+      signer,
+      beeApiUrl
+    );
+    if (isEmpty(latestComment)) {
+      return {} as LastNComments;
+    }
+
+    const bee = new Bee(beeApiUrl);
+    const topicHex: Topic = bee.makeFeedTopic(topic);
+    const nextIndex = latestComment.nextIndex - 1;
+    const startIx = nextIndex > numOfComments ? nextIndex - numOfComments : 0;
+    comments = await readCommentsAsync({
+      stamp: stamp,
+      identifier: topicHex,
+      signer: signer,
+      beeApiUrl: beeApiUrl,
+      approvedFeedAddress: signer.address as unknown as string,
+      startIx: startIx,
+      endIx: nextIndex,
+    });
+    lastNComments = {
+      comments: comments,
+      nextIndex: latestComment.nextIndex,
+    };
+    console.log(
+      `loading last ${numOfComments} comments for topic ${topic} success: `,
+      latestComment
+    );
+  } catch (err) {
+    console.log(`load last ${numOfComments} comments error: ${err}`);
+    return {} as LastNComments;
+  }
+
+  return lastNComments;
 };
