@@ -1,6 +1,2 @@
-export {
-  SwarmCommentSystem,
-  loadLatestComment,
-  loadLastNComments,
-} from "./swarm-comment-system/SwarmCommentSystem";
+export { SwarmCommentSystem } from "./swarm-comment-system/SwarmCommentSystem";
 export type { SwarmCommentSystemProps } from "./swarm-comment-system/SwarmCommentSystem";
