@@ -1,27 +1,18 @@
-import React, { useState } from "react";
+import React, { useState, ChangeEvent } from "react";
 import { CommentRequest } from "@solarpunkltd/comment-system";
 import "./swarm-comment-input.scss";
 import SendIcon from "../icons/SendIcon/SendIcon";
-
-type FlavoredType<Type, Name> = Type & {
-  __tag__?: Name;
-};
-type HexString<Length extends number = number> = FlavoredType<
-  string & {
-    readonly length: Length;
-  },
-  "HexString"
->;
-export declare const ETH_ADDRESS_LENGTH = 42;
-export type EthAddress = HexString<typeof ETH_ADDRESS_LENGTH>;
+import { MAX_CHARACTER_COUNT } from "../../utils/helpers";
 
 interface SwarmCommentInputProps {
   username: string;
+  maxCharacterCount?: number;
   onSubmit: (comment: CommentRequest) => Promise<void>;
 }
 
 const SwarmCommentInput: React.FC<SwarmCommentInputProps> = ({
   username,
+  maxCharacterCount,
   onSubmit,
 }) => {
   const [commentToSend, setCommentToSend] = useState("");
@@ -31,6 +22,15 @@ const SwarmCommentInput: React.FC<SwarmCommentInputProps> = ({
     if (e.key === "Enter") {
       sendComment();
     }
+  };
+
+  const handleOnChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const maxCharCount = maxCharacterCount || MAX_CHARACTER_COUNT;
+    if (e.target.value.length > maxCharCount) {
+      console.log("max comment length reached: ", maxCharCount);
+      return;
+    }
+    setCommentToSend(e.target.value);
   };
 
   const sendComment = async () => {
@@ -60,7 +60,7 @@ const SwarmCommentInput: React.FC<SwarmCommentInputProps> = ({
         <>
           <input
             value={commentToSend}
-            onChange={(e) => setCommentToSend(e.target.value)}
+            onChange={(e) => handleOnChange(e)}
             onKeyDown={handleKeyDown}
             className="swarm-comment-input__input"
           />

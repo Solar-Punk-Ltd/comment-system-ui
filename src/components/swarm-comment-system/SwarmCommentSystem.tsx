@@ -30,6 +30,7 @@ export interface SwarmCommentSystemProps {
   username: string;
   preloadedCommnets?: Comment[];
   numOfComments?: number;
+  maxCharacterCount?: number;
   startIx?: number;
   endIx?: number;
   onComment?: (newComment: Comment) => void;
@@ -46,6 +47,7 @@ export const SwarmCommentSystem: React.FC<SwarmCommentSystemProps> = ({
   username,
   preloadedCommnets,
   numOfComments,
+  maxCharacterCount,
   startIx,
   endIx,
   onComment,
@@ -155,7 +157,11 @@ export const SwarmCommentSystem: React.FC<SwarmCommentSystemProps> = ({
     <div className={"swarm-comment-system-wrapper"}>
       <SwarmCommentList comments={comments} loading={loading} />
       {!loading && (
-        <SwarmCommentInput username={username} onSubmit={sendComment} />
+        <SwarmCommentInput
+          username={username}
+          maxCharacterCount={maxCharacterCount}
+          onSubmit={sendComment}
+        />
       )}
     </div>
   );
