@@ -1,10 +1,10 @@
 import React from "react";
+import { CommentRequest } from "@solarpunkltd/comment-system";
 import "./swarm-comment.scss";
 // import LikeIcon from "../../icons/LikeIcon/LikeIcon";
 // import LikeIconFilled from "../../icons/LikeIconFilled/LikeIconFilled";
 import AvatarMonogram from "../../../icons/AvatarMonogram/AvatarMonogram";
 import { createMonogram, formatTime } from "../../../../utils/helpers";
-import { CommentRequest } from "@solarpunkltd/comment-system";
 
 const SwarmComment: React.FC<CommentRequest> = ({ user, data, timestamp }) => {
   return (

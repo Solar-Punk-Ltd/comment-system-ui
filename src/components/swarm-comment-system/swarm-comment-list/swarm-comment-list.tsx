@@ -1,14 +1,14 @@
 import React from "react";
+import { Comment } from "@solarpunkltd/comment-system";
 import "./swarm-comment-list.scss";
 import SwarmComment from "./swarm-comment/swarm-comment";
-import { Comment } from "@solarpunkltd/comment-system";
 
-export interface SwarmCommentSystemProps {
-  comments: Comment[] | null;
+interface SwarmCommentListProps {
+  comments: Comment[];
   loading: boolean;
 }
 
-const SwarmCommentList: React.FC<SwarmCommentSystemProps> = ({
+const SwarmCommentList: React.FC<SwarmCommentListProps> = ({
   comments,
   loading,
 }) => {

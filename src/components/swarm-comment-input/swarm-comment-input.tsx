@@ -1,7 +1,7 @@
 import React, { useState } from "react";
-import SendIcon from "../icons/SendIcon/SendIcon";
-import "./swarm-comment-input.scss";
 import { CommentRequest } from "@solarpunkltd/comment-system";
+import "./swarm-comment-input.scss";
+import SendIcon from "../icons/SendIcon/SendIcon";
 
 type FlavoredType<Type, Name> = Type & {
   __tag__?: Name;
