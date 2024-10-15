@@ -17,6 +17,9 @@ import { isEmpty } from "../../utils/helpers";
  * beeApiUrl - Bee API URL
  * signer - Signer object
  * username - Nickname of the user
+ * preloadedCommnets - pre-loaded comments to display, does not load comments from the feed
+ * numOfComments - maximum number of comments to load
+ * maxCharacterCount - maximum number of characters for a comment
  * startIx - start index to load comments in the feed
  * endIx -  end index for loading comments in the feed
  * onComment - callback for comment events
@@ -34,7 +37,7 @@ export interface SwarmCommentSystemProps {
   startIx?: number;
   endIx?: number;
   onComment?: (newComment: Comment) => void;
-  onRead?: (start: number, end: number) => void;
+  onRead?: (comments: Comment[], end: number) => void;
 }
 
 const defaultNumOfComments = 9;
@@ -106,7 +109,7 @@ export const SwarmCommentSystem: React.FC<SwarmCommentSystemProps> = ({
         setCurrentEndIx(newEndIx);
         // return the start and end index to the parent component
         if (onRead) {
-          onRead(newStartIx, newEndIx);
+          onRead(tmpComments, newEndIx);
         }
         console.log("currentStartIx: ", currentStartIx);
         console.log("currentEndIx: ", currentEndIx);

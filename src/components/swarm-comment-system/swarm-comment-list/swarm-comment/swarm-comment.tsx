@@ -24,13 +24,6 @@ const SwarmComment: React.FC<CommentRequest> = ({ user, data, timestamp }) => {
         </div>
 
         <p className="swarm-comment__right-side__text">{data}</p>
-
-        <div
-          className="swarm-comment__right-side__swarm-comment-controls"
-          onClick={() => null}
-        >
-          {" "}
-        </div>
       </div>
     </div>
   );
