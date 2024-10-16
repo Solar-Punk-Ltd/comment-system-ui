@@ -43,7 +43,7 @@ export interface SwarmCommentSystemProps {
 }
 
 const defaultNumOfComments = 9;
-// const ONE_MINUTE = 1000 * 60;
+const ONE_MINUTE = 1000 * 60;
 
 export const SwarmCommentSystem: React.FC<SwarmCommentSystemProps> = ({
   stamp,
@@ -87,26 +87,31 @@ export const SwarmCommentSystem: React.FC<SwarmCommentSystemProps> = ({
 
   const updateCommentList = (newComments: CommentsWithIndex) => {
     if (!isEmpty(newComments)) {
-      const tmpComments: Comment[] = [...comments].concat(newComments.comments);
+      let tmpComments: Comment[] = [];
+      setComments((prevComments) => {
+        tmpComments = [...prevComments].concat(newComments.comments);
+        return tmpComments;
+      });
       console.log("loading comments success: ", tmpComments);
       const newStartIx =
         newComments.nextIndex - defaultNumOfComments > 0
           ? newComments.nextIndex - defaultNumOfComments
           : 0;
-      setCurrentStartIx(newStartIx);
+      setCurrentStartIx(() => newStartIx);
       const newEndIx = newComments.nextIndex - 1;
-      setCurrentEndIx(newEndIx);
+      setCurrentEndIx(() => newEndIx);
       // return the newly read comments and the last index to the parent component
       if (onRead) {
         onRead(tmpComments, newEndIx);
       }
       console.log("currentStartIx: ", currentStartIx);
       console.log("currentEndIx: ", currentEndIx);
-      setComments(tmpComments);
     }
   };
 
   // Will load comments for the given topic (which is the room-name)
+  // TODO: auto-scroll to bottom when new comments are loaded
+  // TODO: comments are loaded twice initially and in case of a new comment the last 5 is added also, not just the new one
   const loadComments = async () => {
     try {
       setLoading(true);
@@ -140,8 +145,8 @@ export const SwarmCommentSystem: React.FC<SwarmCommentSystemProps> = ({
       }
       console.log("Write result ", newComment);
 
-      setComments([...(comments as Comment[]), newComment]);
-      setCurrentEndIx(currentEndIx + 1);
+      setComments((prevComments) => [...prevComments, newComment]);
+      setCurrentEndIx((prevEndIx) => prevEndIx + 1);
       if (onComment) {
         onComment(newComment);
       }
@@ -163,6 +168,32 @@ export const SwarmCommentSystem: React.FC<SwarmCommentSystemProps> = ({
   const handlCancel = () => {
     setShowResendPopUp(false);
   };
+
+  // loading new comments in every minute
+  useEffect(() => {
+    const newCommentsToRead = 5;
+    const interval = setInterval(async () => {
+      try {
+        const newComments = await loadLatestComments(
+          stamp,
+          topic,
+          signer,
+          beeApiUrl,
+          newCommentsToRead
+        );
+        if (newComments.nextIndex > currentEndIx + 1) {
+          updateCommentList(newComments);
+          console.log(
+            `${newComments.comments.length} new commetns arrived, list is updated`
+          );
+        }
+      } catch (err) {
+        console.log("fetching new comments error: ", err);
+      }
+    }, ONE_MINUTE);
+
+    return () => clearInterval(interval);
+  }, [currentEndIx]);
 
   return (
     <div className={"swarm-comment-system-wrapper"}>
