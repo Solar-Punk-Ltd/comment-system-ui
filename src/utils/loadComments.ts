@@ -25,10 +25,7 @@ export const readLatestComment = async (
       beeApiUrl: beeApiUrl,
       approvedFeedAddress: signer.address as unknown as string,
     });
-
-    console.log(
-      `loaded latest comment of topic ${topic} success: ${latestComment}`
-    );
+    console.log(`loaded latest comment of topic ${topic} success`);
   } catch (err) {
     console.log("loading latest comment error: ", err);
     return {} as SingleComment;
@@ -75,8 +72,7 @@ export const loadLatestComments = async (
       nextIndex: endIx + 1,
     };
     console.log(
-      `loading latest ${numOfComments} comments of topic ${topic} success: `,
-      latestComment
+      `loading latest ${numOfComments} comments of topic ${topic} success`
     );
   } catch (err) {
     console.log(`load last ${numOfComments} comments error: ${err}`);
