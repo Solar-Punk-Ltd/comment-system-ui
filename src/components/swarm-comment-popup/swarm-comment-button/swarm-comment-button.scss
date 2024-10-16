@@ -1,0 +1,41 @@
+.swarm-comment-button {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 80px;
+  height: 56px;
+  border-radius: 12px;
+  box-sizing: border-box;
+  font-size: 20px;
+  font-weight: 700;
+  flex: 1 1 0;
+  font-family: "Public Sans", sans-serif;
+  cursor: pointer;
+  transition: border-color 0.25s;
+  z-index: 1;
+  position: relative;
+}
+
+.swarm-comment-button--filled {
+  border: none;
+  color: white;
+  background: linear-gradient(0deg, #8c72ae 0%, #873de7 100%);
+}
+
+.swarm-comment-button--filled:active {
+  background: linear-gradient(0deg, #8223ff, #8223ff);
+}
+
+.swarm-comment-button--outlined {
+  border: 1px solid #8c72ae;
+  color: #8c72ae;
+  background: white;
+}
+
+.swarm-comment-button--inactive {
+  border: none;
+  color: #a5adba;
+  background: #f2f2f2;
+  cursor: not-allowed;
+}

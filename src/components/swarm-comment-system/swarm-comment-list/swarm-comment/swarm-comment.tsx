@@ -6,6 +6,7 @@ import "./swarm-comment.scss";
 import AvatarMonogram from "../../../icons/AvatarMonogram/AvatarMonogram";
 import { createMonogram, formatTime } from "../../../../utils/helpers";
 
+// TODO: like functionality
 const SwarmComment: React.FC<CommentRequest> = ({ user, data, timestamp }) => {
   return (
     <div className="swarm-comment">
