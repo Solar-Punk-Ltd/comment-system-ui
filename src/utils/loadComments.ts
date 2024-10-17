@@ -99,13 +99,9 @@ export const loadNextComments = async (
       beeApiUrl
     );
     if (isEmpty(latestComment) || !latestComment.nextIndex) {
-      console.log("bagoy empty latestComment");
       return {} as CommentsWithIndex;
     }
-    console.log("bagoy latestComment.nextIndex: ", latestComment.nextIndex);
     if (latestComment.nextIndex - 1 <= prevEndIx) {
-      console.log("bagoy latestComment.nextIndex - 1 <= prevEndIx");
-      console.log("bagoy prevEndIx: ", prevEndIx);
       return {} as CommentsWithIndex;
     }
 
@@ -113,15 +109,10 @@ export const loadNextComments = async (
     const topicHex: Topic = bee.makeFeedTopic(topic);
     let endIx;
     if (prevEndIx + numOfComments < latestComment.nextIndex) {
-      console.log(
-        "bagoy if prevEndIx + numOfComments < latestComment.nextIndex"
-      );
       endIx = prevEndIx + numOfComments - 1;
     } else {
-      console.log("bagoy else...");
       endIx = latestComment.nextIndex - 1;
     }
-    console.log("bagoy endIx: ", endIx);
 
     const comments = await readCommentsAsync({
       stamp: stamp,

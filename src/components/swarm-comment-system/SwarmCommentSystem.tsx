@@ -109,7 +109,6 @@ export const SwarmCommentSystem: React.FC<SwarmCommentSystemProps> = ({
 
   // Will load comments for the given topic (which is the room-name)
   // TODO: auto-scroll to bottom when new comments are loaded
-  // TODO: comments are loaded twice initially and in case of a new comment the last 5 is added also, not just the new one
   const loadComments = async () => {
     try {
       setLoading(true);
