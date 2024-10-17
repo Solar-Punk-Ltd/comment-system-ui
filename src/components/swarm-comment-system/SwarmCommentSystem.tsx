@@ -10,7 +10,7 @@ import "./swarm-comment-system.scss";
 import SwarmCommentList from "./swarm-comment-list/swarm-comment-list";
 import SwarmCommentInput from "../swarm-comment-input/swarm-comment-input";
 import SwarmCommentPopup from "../swarm-comment-popup/swarm-comment-popup";
-import { loadLatestComments } from "../../utils/loadComments";
+import { loadLatestComments, loadNextComments } from "../../utils/loadComments";
 import { isEmpty } from "../../utils/helpers";
 
 /**
@@ -39,10 +39,11 @@ export interface SwarmCommentSystemProps {
   startIx?: number;
   endIx?: number;
   onComment?: (newComment: Comment) => void;
-  onRead?: (comments: Comment[], end: number) => void;
+  onRead?: (newComments: Comment[], end: number) => void;
 }
 
 const defaultNumOfComments = 9;
+const newCommentsToRead = 5;
 const ONE_MINUTE = 1000 * 60;
 
 export const SwarmCommentSystem: React.FC<SwarmCommentSystemProps> = ({
@@ -62,7 +63,7 @@ export const SwarmCommentSystem: React.FC<SwarmCommentSystemProps> = ({
   const bee = new Bee(beeApiUrl);
   const topicHex: Topic = bee.makeFeedTopic(topic);
   const [comments, setComments] = useState<Comment[]>([]);
-  const [loading, setLoading] = useState<boolean>(false);
+  const [loading, setLoading] = useState<boolean>(true);
   const [currentStartIx, setCurrentStartIx] = useState<number>(startIx || 0);
   const [currentEndIx, setCurrentEndIx] = useState<number>(endIx || 0);
   const [showResendPopUp, setShowResendPopUp] = useState<boolean>(false);
@@ -80,6 +81,7 @@ export const SwarmCommentSystem: React.FC<SwarmCommentSystemProps> = ({
     if (preloadedCommnets) {
       console.log(`pre-loading comments for topic: ${topic}`);
       setComments(preloadedCommnets);
+      setLoading(false);
     } else {
       init();
     }
@@ -87,12 +89,8 @@ export const SwarmCommentSystem: React.FC<SwarmCommentSystemProps> = ({
 
   const updateCommentList = (newComments: CommentsWithIndex) => {
     if (!isEmpty(newComments)) {
-      let tmpComments: Comment[] = [];
-      setComments((prevComments) => {
-        tmpComments = [...prevComments].concat(newComments.comments);
-        return tmpComments;
-      });
-      console.log("loading comments success: ", tmpComments);
+      setComments([...comments].concat(newComments.comments));
+      console.log("loading comments success: ", newComments.comments);
       const newStartIx =
         newComments.nextIndex - defaultNumOfComments > 0
           ? newComments.nextIndex - defaultNumOfComments
@@ -102,10 +100,10 @@ export const SwarmCommentSystem: React.FC<SwarmCommentSystemProps> = ({
       setCurrentEndIx(() => newEndIx);
       // return the newly read comments and the last index to the parent component
       if (onRead) {
-        onRead(tmpComments, newEndIx);
+        onRead(newComments.comments, newEndIx);
       }
+      // TODO: remove currentStartIx log later, if scrolling is implemented
       console.log("currentStartIx: ", currentStartIx);
-      console.log("currentEndIx: ", currentEndIx);
     }
   };
 
@@ -169,16 +167,19 @@ export const SwarmCommentSystem: React.FC<SwarmCommentSystemProps> = ({
     setShowResendPopUp(false);
   };
 
-  // loading new comments in every minute
+  // loading new comments in every 30 seconds
   useEffect(() => {
-    const newCommentsToRead = 5;
+    if (loading) {
+      return;
+    }
     const interval = setInterval(async () => {
       try {
-        const newComments = await loadLatestComments(
+        const newComments = await loadNextComments(
           stamp,
           topic,
           signer,
           beeApiUrl,
+          currentEndIx,
           newCommentsToRead
         );
         if (newComments.nextIndex > currentEndIx + 1) {
@@ -190,10 +191,10 @@ export const SwarmCommentSystem: React.FC<SwarmCommentSystemProps> = ({
       } catch (err) {
         console.log("fetching new comments error: ", err);
       }
-    }, ONE_MINUTE);
+    }, ONE_MINUTE / 2);
 
     return () => clearInterval(interval);
-  }, [currentEndIx]);
+  }, [loading, currentEndIx]);
 
   return (
     <div className={"swarm-comment-system-wrapper"}>
@@ -202,7 +203,7 @@ export const SwarmCommentSystem: React.FC<SwarmCommentSystemProps> = ({
           question="Failed to send comment!"
           leftButtonText="Cancel"
           leftButtonHandler={() => handlCancel()}
-          rightButtonText="Resend"
+          rightButtonText="Try again"
           rightButtonHandler={() => handleResendButton()}
         />
       )}
