@@ -3,7 +3,7 @@ import React, { useState, ChangeEvent } from "react";
 import { CommentRequest } from "@solarpunkltd/comment-system";
 import "./swarm-comment-input.scss";
 import SendIcon from "../icons/SendIcon/SendIcon";
-import { MAX_CHARACTER_COUNT } from "../../utils/helpers";
+import { MAX_CHARACTER_COUNT } from "../../utils/constants";
 
 interface SwarmCommentInputProps {
   username: string;

@@ -24,7 +24,6 @@ export const readLatestComment = async (
       beeApiUrl: beeApiUrl,
       approvedFeedAddress: signer.address as unknown as string,
     });
-    console.log(`loaded the latest comment of topic ${topic} success`);
   } catch (err) {
     console.log(`loading the latest comment of topic ${topic} error: ${err}`);
     return {} as SingleComment;
@@ -54,7 +53,10 @@ export const loadLatestComments = async (
 
     const bee = new Bee(beeApiUrl);
     const topicHex: Topic = bee.makeFeedTopic(topic);
-    const endIx = latestComment.nextIndex ? latestComment.nextIndex - 1 : 0;
+    const endIx =
+      latestComment.nextIndex && latestComment.nextIndex > 0
+        ? latestComment.nextIndex - 1
+        : 0;
     const startIx = endIx > numOfComments ? endIx - numOfComments + 1 : 0;
     const comments = await readCommentsAsync({
       stamp: stamp,
