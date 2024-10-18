@@ -11,6 +11,7 @@ import "./swarm-comment-system.scss";
 import SwarmCommentList from "./swarm-comment-list/swarm-comment-list";
 import SwarmCommentInput from "../swarm-comment-input/swarm-comment-input";
 import SwarmCommentPopup from "../swarm-comment-popup/swarm-comment-popup";
+import { SwarmCommentWithErrorFlag } from "./swarm-comment-list/swarm-comment/swarm-comment";
 import { loadLatestComments, loadNextComments } from "../../utils/loadComments";
 import { isEmpty } from "../../utils/helpers";
 import {
@@ -64,7 +65,7 @@ export const SwarmCommentSystem: React.FC<SwarmCommentSystemProps> = ({
 }) => {
   const bee = new Bee(beeApiUrl);
   const topicHex: Topic = bee.makeFeedTopic(topic);
-  const [comments, setComments] = useState<Comment[]>([]);
+  const [comments, setComments] = useState<SwarmCommentWithErrorFlag[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [currentStartIx, setCurrentStartIx] = useState<number>(startIx || 0);
   const [currentEndIx, setCurrentEndIx] = useState<number>(endIx || 0);
@@ -145,7 +146,14 @@ export const SwarmCommentSystem: React.FC<SwarmCommentSystemProps> = ({
       });
 
       if (!newComment || Array.from(Object.keys(newComment)).length === 0) {
-        throw "Comment write failed.";
+        setComments((prevComments) => [
+          ...prevComments,
+          {
+            ...comment,
+            error: true,
+          },
+        ]);
+        throw "Comment write failed, empty response!";
       }
       console.log("Write result ", newComment);
       // need to check if the comment was written successfully to the expected index
@@ -163,12 +171,36 @@ export const SwarmCommentSystem: React.FC<SwarmCommentSystemProps> = ({
         commentCheck.comment.data !== comment.data ||
         commentCheck.comment.timestamp !== comment.timestamp
       ) {
+        setComments((prevComments) => [
+          ...prevComments,
+          {
+            ...comment,
+            error: true,
+          },
+        ]);
         // if another comment is found at the expected index then updateNextCommentsCb shall find it and update the list
         throw `comment check failed, expected "${comment.data}", got: "${commentCheck.comment.data}".
                 Expected timestamp: ${comment.timestamp}, got: ${commentCheck.comment.timestamp}`;
       }
-
-      setComments((prevComments) => [...prevComments, newComment]);
+      // if resend is succesful then find, remove and push the currently error-flagged comment to the end of the list
+      const foundIX = comments.findIndex(
+        (c) => c.error && c.data === comment.data
+      );
+      if (foundIX > -1) {
+        console.log(
+          `found error-flagged comment at index: ${foundIX}, removing it...`
+        );
+        setComments((prevComments) => {
+          prevComments.splice(foundIX, 1);
+          prevComments.push({
+            ...comment,
+            error: false,
+          });
+          return prevComments;
+        });
+      } else {
+        setComments((prevComments) => [...prevComments, newComment]);
+      }
       setCurrentEndIx((prevEndIx) => prevEndIx + 1);
       if (onComment) {
         onComment(newComment);
@@ -204,9 +236,6 @@ export const SwarmCommentSystem: React.FC<SwarmCommentSystemProps> = ({
         DEFAULT_NEW_COMMENTS_TO_READ
       );
       if (newComments.nextIndex > currentEndIx + 1) {
-        console.log(
-          `bagoy nextIndex: ${newComments.nextIndex}, currentEndIx: ${currentEndIx}`
-        );
         updateCommentList(newComments);
         console.log(
           `${newComments.comments.length} new commetns arrived, list is updated`
@@ -223,7 +252,7 @@ export const SwarmCommentSystem: React.FC<SwarmCommentSystemProps> = ({
     }
     const interval = setInterval(async () => {
       updateNextCommentsCb();
-    }, TEN_SECONDS / 2);
+    }, TEN_SECONDS);
 
     return () => clearInterval(interval);
   }, [loading, updateNextCommentsCb]);

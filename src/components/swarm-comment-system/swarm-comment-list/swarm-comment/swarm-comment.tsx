@@ -4,7 +4,16 @@ import "./swarm-comment.scss";
 import AvatarMonogram from "../../../icons/AvatarMonogram/AvatarMonogram";
 import { createMonogram, formatTime } from "../../../../utils/helpers";
 
-const SwarmComment: React.FC<CommentRequest> = ({ user, data, timestamp }) => {
+export interface SwarmCommentWithErrorFlag extends CommentRequest {
+  error?: boolean;
+}
+
+const SwarmComment: React.FC<SwarmCommentWithErrorFlag> = ({
+  user,
+  data,
+  timestamp,
+  error,
+}) => {
   return (
     <div className="swarm-comment">
       <div className="swarm-comment__left-side">
@@ -21,7 +30,15 @@ const SwarmComment: React.FC<CommentRequest> = ({ user, data, timestamp }) => {
           </p>
         </div>
 
-        <p className="swarm-comment__right-side__text">{data}</p>
+        <p
+          className={
+            error
+              ? "swarm-comment__right-side__text__error"
+              : "swarm-comment__right-side__text"
+          }
+        >
+          {data}
+        </p>
       </div>
     </div>
   );
