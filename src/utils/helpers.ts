@@ -1,5 +1,3 @@
-export const MAX_CHARACTER_COUNT = 4096;
-
 export const createMonogram = (name: string) => {
   const initials = name.split(" ").map((n) => n[0]);
   return initials.join("").toUpperCase();
