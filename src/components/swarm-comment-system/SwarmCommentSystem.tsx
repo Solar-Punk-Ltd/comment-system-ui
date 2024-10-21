@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback } from "react";
 import { Bee, Signer, Topic } from "@ethersphere/bee-js";
 import {
   Comment,
+  CommentRequest,
   CommentsWithIndex,
   writeCommentToIndex,
   readSingleComment,
@@ -78,7 +79,7 @@ export const SwarmCommentSystem: React.FC<SwarmCommentSystemProps> = ({
 
   useEffect(() => {
     if (preloadedCommnets) {
-      console.log(`pre-loading comments for topic: ${topic}`);
+      console.log(`preloading comments for topic: ${topic}`);
       setComments(preloadedCommnets);
       setLoading(false);
     } else {
@@ -88,7 +89,13 @@ export const SwarmCommentSystem: React.FC<SwarmCommentSystemProps> = ({
 
   const updateCommentList = (newComments: CommentsWithIndex) => {
     if (!isEmpty(newComments)) {
-      setComments([...comments].concat(newComments.comments));
+      if (!loading) {
+        setComments((prevComments) =>
+          [...prevComments].concat(newComments.comments)
+        );
+      } else {
+        setComments([...comments].concat(newComments.comments));
+      }
       console.log(
         "updated comment list with new comments: ",
         newComments.comments
@@ -165,12 +172,25 @@ export const SwarmCommentSystem: React.FC<SwarmCommentSystemProps> = ({
     }
   };
 
+  const [bagoyIx, setBagoyIx] = useState<number>(0);
   const sendComment = async (comment: SwarmCommentWithErrorFlag) => {
     try {
+      setBagoyIx((prevIx) => prevIx + 1);
+      if (bagoyIx % 2 === 1) {
+        throw "bagoy error";
+      }
       // trying to write to the next known index
       const expNextIx = currentEndIx + 1;
       console.log("writing comment to index: ", expNextIx);
-      const newComment = await writeCommentToIndex(comment, {
+      const plainCommentReq: CommentRequest = {
+        data: comment.data,
+        timestamp: comment.timestamp,
+        user: comment.user,
+        id: comment.id,
+        tags: comment.tags,
+        replyId: comment.replyId,
+      };
+      const newComment = await writeCommentToIndex(plainCommentReq, {
         stamp,
         identifier: topicHex,
         signer,
@@ -202,7 +222,7 @@ export const SwarmCommentSystem: React.FC<SwarmCommentSystemProps> = ({
                 Expected timestamp: ${comment.timestamp}, got: ${commentCheck.comment.timestamp}`;
       }
 
-      if (comment.error) {
+      if (comment.error === true) {
         onResend(comment);
       } else {
         setComments((prevComments) => [...prevComments, comment]);
@@ -221,6 +241,9 @@ export const SwarmCommentSystem: React.FC<SwarmCommentSystemProps> = ({
 
   // loading new comments in every 10 seconds
   const updateNextCommentsCb = useCallback(async () => {
+    if (loading) {
+      return;
+    }
     try {
       const newComments = await loadNextComments(
         stamp,
@@ -239,18 +262,15 @@ export const SwarmCommentSystem: React.FC<SwarmCommentSystemProps> = ({
     } catch (err) {
       console.log("fetching new comments error: ", err);
     }
-  }, [currentEndIx]);
+  }, [currentEndIx, loading]);
 
   useEffect(() => {
-    if (loading) {
-      return;
-    }
     const interval = setInterval(async () => {
       updateNextCommentsCb();
     }, TEN_SECONDS);
 
     return () => clearInterval(interval);
-  }, [loading, updateNextCommentsCb]);
+  }, [updateNextCommentsCb]);
 
   return (
     <div className={"swarm-comment-system-wrapper"}>

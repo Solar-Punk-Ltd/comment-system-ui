@@ -27,7 +27,7 @@ const SwarmComment: React.FC<SwarmCommentWithErrorFlag> = ({
       data: data,
       timestamp: Date.now(),
       user: user,
-      error: true,
+      error: errorFlag,
     };
 
     setSending(true);
