@@ -1,8 +1,7 @@
-import { useEffect, useState, useRef, useCallback } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { Bee, Signer, Topic } from "@ethersphere/bee-js";
 import {
   Comment,
-  CommentRequest,
   CommentsWithIndex,
   writeCommentToIndex,
   readSingleComment,
@@ -10,7 +9,6 @@ import {
 import "./swarm-comment-system.scss";
 import SwarmCommentList from "./swarm-comment-list/swarm-comment-list";
 import SwarmCommentInput from "../swarm-comment-input/swarm-comment-input";
-import SwarmCommentPopup from "../swarm-comment-popup/swarm-comment-popup";
 import { SwarmCommentWithErrorFlag } from "./swarm-comment-list/swarm-comment/swarm-comment";
 import { loadLatestComments, loadNextComments } from "../../utils/loadComments";
 import { isEmpty } from "../../utils/helpers";
@@ -69,8 +67,6 @@ export const SwarmCommentSystem: React.FC<SwarmCommentSystemProps> = ({
   const [loading, setLoading] = useState<boolean>(true);
   const [currentStartIx, setCurrentStartIx] = useState<number>(startIx || 0);
   const [currentEndIx, setCurrentEndIx] = useState<number>(endIx || 0);
-  const [showResendPopUp, setShowResendPopUp] = useState<boolean>(false);
-  const resendRef = useRef<HTMLButtonElement>(null);
 
   const commentsToRead = numOfComments || DEFAULT_NUM_OF_COMMENTS;
 
@@ -113,6 +109,7 @@ export const SwarmCommentSystem: React.FC<SwarmCommentSystemProps> = ({
 
   // Will load comments for the given topic (which is the room-name)
   // TODO: auto-scroll to bottom when new comments are loaded
+  // TODO: loadnextcomments updated the list in a wrong way, somehow overwrites the preloaded list
   const loadComments = async () => {
     try {
       setLoading(true);
@@ -132,7 +129,43 @@ export const SwarmCommentSystem: React.FC<SwarmCommentSystemProps> = ({
     }
   };
 
-  const sendComment = async (comment: CommentRequest) => {
+  // if resend is succesful then find, remove and push the currently error-flagged comment to the end of the list
+  const onResend = (comment: SwarmCommentWithErrorFlag) => {
+    const foundIX = comments.findIndex(
+      (c) => c.error && c.data === comment.data && c.id === comment.id
+    );
+    if (foundIX > -1) {
+      console.log(
+        `found error-flagged comment at index: ${foundIX}, removing it...`
+      );
+      setComments((prevComments) => {
+        prevComments.splice(foundIX, 1);
+        prevComments.push({
+          ...comment,
+          error: false,
+        });
+        return prevComments;
+      });
+    }
+  };
+
+  // only add failed comments to the list, if not already present
+  const onFailure = (comment: SwarmCommentWithErrorFlag) => {
+    const foundIX = comments.findIndex(
+      (c) => c.error && c.data === comment.data && c.id === comment.id
+    );
+    if (foundIX < 0) {
+      setComments((prevComments) => [
+        ...prevComments,
+        {
+          ...comment,
+          error: true,
+        },
+      ]);
+    }
+  };
+
+  const sendComment = async (comment: SwarmCommentWithErrorFlag) => {
     try {
       // trying to write to the next known index
       const expNextIx = currentEndIx + 1;
@@ -146,13 +179,6 @@ export const SwarmCommentSystem: React.FC<SwarmCommentSystemProps> = ({
       });
 
       if (!newComment || Array.from(Object.keys(newComment)).length === 0) {
-        setComments((prevComments) => [
-          ...prevComments,
-          {
-            ...comment,
-            error: true,
-          },
-        ]);
         throw "Comment write failed, empty response!";
       }
       console.log("Write result ", newComment);
@@ -171,57 +197,26 @@ export const SwarmCommentSystem: React.FC<SwarmCommentSystemProps> = ({
         commentCheck.comment.data !== comment.data ||
         commentCheck.comment.timestamp !== comment.timestamp
       ) {
-        setComments((prevComments) => [
-          ...prevComments,
-          {
-            ...comment,
-            error: true,
-          },
-        ]);
         // if another comment is found at the expected index then updateNextCommentsCb shall find it and update the list
         throw `comment check failed, expected "${comment.data}", got: "${commentCheck.comment.data}".
                 Expected timestamp: ${comment.timestamp}, got: ${commentCheck.comment.timestamp}`;
       }
-      // if resend is succesful then find, remove and push the currently error-flagged comment to the end of the list
-      const foundIX = comments.findIndex(
-        (c) => c.error && c.data === comment.data
-      );
-      if (foundIX > -1) {
-        console.log(
-          `found error-flagged comment at index: ${foundIX}, removing it...`
-        );
-        setComments((prevComments) => {
-          prevComments.splice(foundIX, 1);
-          prevComments.push({
-            ...comment,
-            error: false,
-          });
-          return prevComments;
-        });
+
+      if (comment.error) {
+        onResend(comment);
       } else {
-        setComments((prevComments) => [...prevComments, newComment]);
+        setComments((prevComments) => [...prevComments, comment]);
       }
+
       setCurrentEndIx((prevEndIx) => prevEndIx + 1);
       if (onComment) {
         onComment(newComment);
       }
-      setShowResendPopUp(false);
     } catch (err) {
       console.log("writing comments error: ", err);
-      setShowResendPopUp(true);
+      onFailure(comment);
       throw err;
     }
-  };
-
-  const handleResendButton = () => {
-    setShowResendPopUp(false);
-    if (resendRef.current) {
-      resendRef.current.click();
-    }
-  };
-
-  const handlCancel = () => {
-    setShowResendPopUp(false);
   };
 
   // loading new comments in every 10 seconds
@@ -245,7 +240,7 @@ export const SwarmCommentSystem: React.FC<SwarmCommentSystemProps> = ({
       console.log("fetching new comments error: ", err);
     }
   }, [currentEndIx]);
-  // TODO: sometimes loading the next one owerwrites the previous ones
+
   useEffect(() => {
     if (loading) {
       return;
@@ -259,24 +254,17 @@ export const SwarmCommentSystem: React.FC<SwarmCommentSystemProps> = ({
 
   return (
     <div className={"swarm-comment-system-wrapper"}>
-      {showResendPopUp && (
-        <SwarmCommentPopup
-          question="Failed to send comment!"
-          leftButtonText="Cancel"
-          leftButtonHandler={() => handlCancel()}
-          rightButtonText="Try again"
-          rightButtonHandler={() => handleResendButton()}
-        />
-      )}
-      <SwarmCommentList comments={comments} loading={loading} />
+      <SwarmCommentList
+        comments={comments}
+        loading={loading}
+        resend={sendComment}
+      />
       {!loading && (
         <>
           <SwarmCommentInput
             username={username}
             maxCharacterCount={maxCharacterCount}
             onSubmit={sendComment}
-            onResend={setShowResendPopUp}
-            buttonRef={resendRef}
           />
         </>
       )}

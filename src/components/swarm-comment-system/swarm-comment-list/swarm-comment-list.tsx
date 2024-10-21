@@ -1,4 +1,5 @@
 import React from "react";
+// import { CommentRequest } from "@solarpunkltd/comment-system";
 import "./swarm-comment-list.scss";
 import SwarmComment, {
   SwarmCommentWithErrorFlag,
@@ -7,11 +8,13 @@ import SwarmComment, {
 interface SwarmCommentListProps {
   comments: SwarmCommentWithErrorFlag[];
   loading: boolean;
+  resend?: (comment: SwarmCommentWithErrorFlag) => Promise<void>;
 }
 
 const SwarmCommentList: React.FC<SwarmCommentListProps> = ({
   comments,
   loading,
+  resend,
 }) => {
   if (!comments || comments.length === 0) {
     return (
@@ -37,6 +40,7 @@ const SwarmCommentList: React.FC<SwarmCommentListProps> = ({
           key={ix}
           timestamp={c.timestamp}
           error={c.error}
+          resend={resend}
         />
       ))}
     </div>
