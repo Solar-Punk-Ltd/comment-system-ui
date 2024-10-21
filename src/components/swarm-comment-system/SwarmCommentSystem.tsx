@@ -172,13 +172,8 @@ export const SwarmCommentSystem: React.FC<SwarmCommentSystemProps> = ({
     }
   };
 
-  const [bagoyIx, setBagoyIx] = useState<number>(0);
   const sendComment = async (comment: SwarmCommentWithErrorFlag) => {
     try {
-      setBagoyIx((prevIx) => prevIx + 1);
-      if (bagoyIx % 2 === 1) {
-        throw "bagoy error";
-      }
       // trying to write to the next known index
       const expNextIx = currentEndIx + 1;
       console.log("writing comment to index: ", expNextIx);
