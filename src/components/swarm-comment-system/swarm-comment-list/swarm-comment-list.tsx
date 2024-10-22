@@ -1,16 +1,20 @@
 import React from "react";
-import { Comment } from "@solarpunkltd/comment-system";
+// import { CommentRequest } from "@solarpunkltd/comment-system";
 import "./swarm-comment-list.scss";
-import SwarmComment from "./swarm-comment/swarm-comment";
+import SwarmComment, {
+  SwarmCommentWithErrorFlag,
+} from "./swarm-comment/swarm-comment";
 
 interface SwarmCommentListProps {
-  comments: Comment[];
+  comments: SwarmCommentWithErrorFlag[];
   loading: boolean;
+  resend?: (comment: SwarmCommentWithErrorFlag) => Promise<void>;
 }
 
 const SwarmCommentList: React.FC<SwarmCommentListProps> = ({
   comments,
   loading,
+  resend,
 }) => {
   if (!comments || comments.length === 0) {
     return (
@@ -29,12 +33,14 @@ const SwarmCommentList: React.FC<SwarmCommentListProps> = ({
 
   return (
     <div className="swarm-comment-system-comment-list">
-      {comments.map((msg, ix) => (
+      {comments.map((c, ix) => (
         <SwarmComment
-          data={msg.data}
-          user={msg.user}
+          data={c.data}
+          user={c.user}
           key={ix}
-          timestamp={msg.timestamp}
+          timestamp={c.timestamp}
+          error={c.error}
+          resend={resend}
         />
       ))}
     </div>

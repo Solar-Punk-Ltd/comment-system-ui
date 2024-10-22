@@ -1,17 +1,23 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { Bee, Signer, Topic } from "@ethersphere/bee-js";
 import {
   Comment,
   CommentRequest,
   CommentsWithIndex,
-  writeComment,
+  writeCommentToIndex,
+  readSingleComment,
 } from "@solarpunkltd/comment-system";
 import "./swarm-comment-system.scss";
 import SwarmCommentList from "./swarm-comment-list/swarm-comment-list";
 import SwarmCommentInput from "../swarm-comment-input/swarm-comment-input";
-import SwarmCommentPopup from "../swarm-comment-popup/swarm-comment-popup";
+import { SwarmCommentWithErrorFlag } from "./swarm-comment-list/swarm-comment/swarm-comment";
 import { loadLatestComments, loadNextComments } from "../../utils/loadComments";
 import { isEmpty } from "../../utils/helpers";
+import {
+  DEFAULT_NEW_COMMENTS_TO_READ,
+  DEFAULT_NUM_OF_COMMENTS,
+  TEN_SECONDS,
+} from "../../utils/constants";
 
 /**
  * stamp - Postage stamp ID. If ommitted a first available stamp will be used.
@@ -42,10 +48,6 @@ export interface SwarmCommentSystemProps {
   onRead?: (newComments: Comment[], end: number) => void;
 }
 
-const defaultNumOfComments = 9;
-const newCommentsToRead = 5;
-const ONE_MINUTE = 1000 * 60;
-
 export const SwarmCommentSystem: React.FC<SwarmCommentSystemProps> = ({
   stamp,
   topic,
@@ -62,14 +64,12 @@ export const SwarmCommentSystem: React.FC<SwarmCommentSystemProps> = ({
 }) => {
   const bee = new Bee(beeApiUrl);
   const topicHex: Topic = bee.makeFeedTopic(topic);
-  const [comments, setComments] = useState<Comment[]>([]);
+  const [comments, setComments] = useState<SwarmCommentWithErrorFlag[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [currentStartIx, setCurrentStartIx] = useState<number>(startIx || 0);
   const [currentEndIx, setCurrentEndIx] = useState<number>(endIx || 0);
-  const [showResendPopUp, setShowResendPopUp] = useState<boolean>(false);
-  const resendRef = useRef<HTMLButtonElement>(null);
 
-  const commentsToRead = numOfComments || defaultNumOfComments;
+  const commentsToRead = numOfComments || DEFAULT_NUM_OF_COMMENTS;
 
   /** If the room already exists, it will load the comments,
    *  otherwise, it will create the room */
@@ -79,7 +79,7 @@ export const SwarmCommentSystem: React.FC<SwarmCommentSystemProps> = ({
 
   useEffect(() => {
     if (preloadedCommnets) {
-      console.log(`pre-loading comments for topic: ${topic}`);
+      console.log(`preloading comments for topic: ${topic}`);
       setComments(preloadedCommnets);
       setLoading(false);
     } else {
@@ -89,14 +89,21 @@ export const SwarmCommentSystem: React.FC<SwarmCommentSystemProps> = ({
 
   const updateCommentList = (newComments: CommentsWithIndex) => {
     if (!isEmpty(newComments)) {
-      setComments([...comments].concat(newComments.comments));
-      console.log("loading comments success: ", newComments.comments);
-      const newStartIx =
-        newComments.nextIndex - defaultNumOfComments > 0
-          ? newComments.nextIndex - defaultNumOfComments
-          : 0;
-      setCurrentStartIx(() => newStartIx);
+      if (!loading) {
+        setComments((prevComments) =>
+          [...prevComments].concat(newComments.comments)
+        );
+      } else {
+        setComments([...comments].concat(newComments.comments));
+      }
+      console.log(
+        "updated comment list with new comments: ",
+        newComments.comments
+      );
       const newEndIx = newComments.nextIndex - 1;
+      const newStartIx =
+        newEndIx - commentsToRead > 0 ? newEndIx - commentsToRead + 1 : 0;
+      setCurrentStartIx(() => newStartIx);
       setCurrentEndIx(() => newEndIx);
       // return the newly read comments and the last index to the parent component
       if (onRead) {
@@ -109,6 +116,7 @@ export const SwarmCommentSystem: React.FC<SwarmCommentSystemProps> = ({
 
   // Will load comments for the given topic (which is the room-name)
   // TODO: auto-scroll to bottom when new comments are loaded
+  // TODO: loadnextcomments updated the list in a wrong way, somehow overwrites the preloaded list
   const loadComments = async () => {
     try {
       setLoading(true);
@@ -128,93 +136,150 @@ export const SwarmCommentSystem: React.FC<SwarmCommentSystemProps> = ({
     }
   };
 
-  const sendComment = async (comment: CommentRequest) => {
+  // if resend is succesful then find, remove and push the currently error-flagged comment to the end of the list
+  const onResend = (comment: SwarmCommentWithErrorFlag) => {
+    const foundIX = comments.findIndex(
+      (c) => c.error && c.data === comment.data && c.id === comment.id
+    );
+    if (foundIX > -1) {
+      console.log(
+        `found error-flagged comment at index: ${foundIX}, removing it...`
+      );
+      setComments((prevComments) => {
+        prevComments.splice(foundIX, 1);
+        prevComments.push({
+          ...comment,
+          error: false,
+        });
+        return prevComments;
+      });
+    }
+  };
+
+  // only add failed comments to the list, if not already present
+  const onFailure = (comment: SwarmCommentWithErrorFlag) => {
+    const foundIX = comments.findIndex(
+      (c) => c.error && c.data === comment.data && c.id === comment.id
+    );
+    if (foundIX < 0) {
+      setComments((prevComments) => [
+        ...prevComments,
+        {
+          ...comment,
+          error: true,
+        },
+      ]);
+    }
+  };
+
+  const sendComment = async (comment: SwarmCommentWithErrorFlag) => {
     try {
-      const newComment = await writeComment(comment, {
+      // trying to write to the next known index
+      const expNextIx = currentEndIx + 1;
+      console.log("writing comment to index: ", expNextIx);
+      const plainCommentReq: CommentRequest = {
+        data: comment.data,
+        timestamp: comment.timestamp,
+        user: comment.user,
+        id: comment.id,
+        tags: comment.tags,
+        replyId: comment.replyId,
+      };
+      const newComment = await writeCommentToIndex(plainCommentReq, {
         stamp,
         identifier: topicHex,
         signer,
         beeApiUrl,
+        startIx: expNextIx,
       });
 
       if (!newComment || Array.from(Object.keys(newComment)).length === 0) {
-        throw "Comment write failed.";
+        throw "Comment write failed, empty response!";
       }
       console.log("Write result ", newComment);
+      // need to check if the comment was written successfully to the expected index
+      // commentCheck.nexitIx is undefined if the read ix is defined
+      const commentCheck = await readSingleComment({
+        stamp: stamp,
+        identifier: topicHex,
+        signer: signer,
+        beeApiUrl: beeApiUrl,
+        approvedFeedAddress: signer.address as unknown as string,
+        startIx: expNextIx,
+      });
+      if (
+        !commentCheck ||
+        commentCheck.comment.data !== comment.data ||
+        commentCheck.comment.timestamp !== comment.timestamp
+      ) {
+        // if another comment is found at the expected index then updateNextCommentsCb shall find it and update the list
+        throw `comment check failed, expected "${comment.data}", got: "${commentCheck.comment.data}".
+                Expected timestamp: ${comment.timestamp}, got: ${commentCheck.comment.timestamp}`;
+      }
 
-      setComments((prevComments) => [...prevComments, newComment]);
+      if (comment.error === true) {
+        onResend(comment);
+      } else {
+        setComments((prevComments) => [...prevComments, comment]);
+      }
+
       setCurrentEndIx((prevEndIx) => prevEndIx + 1);
       if (onComment) {
         onComment(newComment);
       }
-      setShowResendPopUp(false);
     } catch (err) {
       console.log("writing comments error: ", err);
-      setShowResendPopUp(true);
+      onFailure(comment);
       throw err;
     }
   };
 
-  const handleResendButton = () => {
-    setShowResendPopUp(false);
-    if (resendRef.current) {
-      resendRef.current.click();
-    }
-  };
-
-  const handlCancel = () => {
-    setShowResendPopUp(false);
-  };
-
-  // loading new comments in every 30 seconds
-  useEffect(() => {
+  // loading new comments in every 10 seconds
+  const updateNextCommentsCb = useCallback(async () => {
     if (loading) {
       return;
     }
-    const interval = setInterval(async () => {
-      try {
-        const newComments = await loadNextComments(
-          stamp,
-          topic,
-          signer,
-          beeApiUrl,
-          currentEndIx,
-          newCommentsToRead
+    try {
+      const newComments = await loadNextComments(
+        stamp,
+        topic,
+        signer,
+        beeApiUrl,
+        currentEndIx,
+        DEFAULT_NEW_COMMENTS_TO_READ
+      );
+      if (newComments.nextIndex > currentEndIx + 1) {
+        updateCommentList(newComments);
+        console.log(
+          `${newComments.comments.length} new commetns arrived, list is updated`
         );
-        if (newComments.nextIndex > currentEndIx + 1) {
-          updateCommentList(newComments);
-          console.log(
-            `${newComments.comments.length} new commetns arrived, list is updated`
-          );
-        }
-      } catch (err) {
-        console.log("fetching new comments error: ", err);
       }
-    }, ONE_MINUTE / 2);
+    } catch (err) {
+      console.log("fetching new comments error: ", err);
+    }
+  }, [currentEndIx, loading]);
+
+  useEffect(() => {
+    const interval = setInterval(async () => {
+      updateNextCommentsCb();
+    }, TEN_SECONDS);
 
     return () => clearInterval(interval);
-  }, [loading, currentEndIx]);
+  }, [updateNextCommentsCb]);
 
   return (
     <div className={"swarm-comment-system-wrapper"}>
-      {showResendPopUp && (
-        <SwarmCommentPopup
-          question="Failed to send comment!"
-          leftButtonText="Cancel"
-          leftButtonHandler={() => handlCancel()}
-          rightButtonText="Try again"
-          rightButtonHandler={() => handleResendButton()}
-        />
-      )}
-      <SwarmCommentList comments={comments} loading={loading} />
+      <SwarmCommentList
+        comments={comments}
+        loading={loading}
+        resend={sendComment}
+      />
       {!loading && (
         <>
           <SwarmCommentInput
             username={username}
             maxCharacterCount={maxCharacterCount}
             onSubmit={sendComment}
-            onResend={setShowResendPopUp}
-            buttonRef={resendRef}
           />
         </>
       )}

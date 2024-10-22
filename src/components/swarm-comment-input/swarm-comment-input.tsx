@@ -3,25 +3,21 @@ import React, { useState, ChangeEvent } from "react";
 import { CommentRequest } from "@solarpunkltd/comment-system";
 import "./swarm-comment-input.scss";
 import SendIcon from "../icons/SendIcon/SendIcon";
-import { MAX_CHARACTER_COUNT } from "../../utils/helpers";
+import { MAX_CHARACTER_COUNT } from "../../utils/constants";
 
 interface SwarmCommentInputProps {
   username: string;
   maxCharacterCount?: number;
-  buttonRef: React.RefObject<HTMLButtonElement>;
-  onResend: (failedFlag: boolean) => void;
   onSubmit: (comment: CommentRequest) => Promise<void>;
 }
 
 const SwarmCommentInput: React.FC<SwarmCommentInputProps> = ({
   username,
   maxCharacterCount,
-  buttonRef,
-  onResend,
   onSubmit,
 }) => {
-  const [commentToSend, setCommentToSend] = useState("");
-  const [sending, setSending] = useState(false);
+  const [commentToSend, setCommentToSend] = useState<string>("");
+  const [sending, setSending] = useState<boolean>(false);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter") {
@@ -49,13 +45,11 @@ const SwarmCommentInput: React.FC<SwarmCommentInputProps> = ({
     setSending(true);
     try {
       await onSubmit(commentObj);
-      setCommentToSend("");
-      onResend(false);
     } catch (err) {
-      onResend(true);
       console.log("onSubmit error: ", err);
     }
 
+    setCommentToSend("");
     setSending(false);
   };
 
@@ -77,7 +71,6 @@ const SwarmCommentInput: React.FC<SwarmCommentInputProps> = ({
           />
           <button
             onClick={sendComment}
-            ref={buttonRef}
             className="swarm-comment-input__send-button"
             disabled={sending}
           >
