@@ -1,32 +1,33 @@
 .swarm-comment-input {
-    display: flex;
-    flex-direction: row;
-    margin: 8px 16px 8px 16px;
-    justify-content: space-between;
-    border: 1px solid #D4D5DD;
-    border-radius: 8px;
-    height: 32px;
-    position: relative;
-    bottom: 0;
-    width: 100%;
-    box-sizing: border-box;
-    left: 0;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  border: 1px solid #d4d5dd;
+  border-radius: 8px;
+  padding: 8px;
+  position: relative;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .swarm-comment-input__input {
-    flex-grow: 1;
-    border: none;
-    margin: 3px;
-    font-size: 16px;
+  flex-grow: 1;
+  border: none;
+  outline: none;
+  font-family: "Public Sans";
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 20px;
+  color: #6f6f88;
 }
 
 .swarm-comment-input__send-button {
-    border: none;
-    background-color: transparent;
-    margin-right: 4px;
+  border: none;
+  background-color: transparent;
+  padding: 0px;
 }
 
 .swarm-comment-input__processing {
-    justify-content: center !important;
-    align-items: center !important;
+  justify-content: center !important;
+  align-items: center !important;
 }

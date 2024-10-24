@@ -268,21 +268,21 @@ export const SwarmCommentSystem: React.FC<SwarmCommentSystemProps> = ({
   }, [updateNextCommentsCb]);
 
   return (
-    <div className={"swarm-comment-system-wrapper"}>
+    <>
       <SwarmCommentList
         comments={comments}
         loading={loading}
         resend={sendComment}
       />
       {!loading && (
-        <>
+        <div className="swarm-comment-system__input-wrapper">
           <SwarmCommentInput
             username={username}
             maxCharacterCount={maxCharacterCount}
             onSubmit={sendComment}
           />
-        </>
+        </div>
       )}
-    </div>
+    </>
   );
 };
