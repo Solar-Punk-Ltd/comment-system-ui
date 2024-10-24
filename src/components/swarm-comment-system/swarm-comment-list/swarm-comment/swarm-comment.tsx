@@ -18,6 +18,7 @@ const SwarmComment: React.FC<SwarmCommentWithErrorFlag> = ({
 }) => {
   const [errorFlag, setErrorFlag] = useState<boolean | undefined>(error);
   const [sending, setSending] = useState<boolean>(false);
+  const actualUser = localStorage.getItem("username");
 
   const resendComment = async () => {
     if (!resend) {
@@ -42,7 +43,7 @@ const SwarmComment: React.FC<SwarmCommentWithErrorFlag> = ({
     setSending(false);
   };
 
-  return (
+  return user !== actualUser ? (
     <div className="swarm-comment">
       <div className="swarm-comment__left-side">
         <AvatarMonogram letters={createMonogram(user)} />
@@ -50,15 +51,15 @@ const SwarmComment: React.FC<SwarmCommentWithErrorFlag> = ({
 
       <div className="swarm-comment__right-side">
         <div className="swarm-comment__right-side__name-and-time">
-          <p className="swarm-comment__right-side__name-and-time__username">
+          <div className="swarm-comment__right-side__name-and-time__username">
             {user}
-          </p>
-          <p className="swarm-comment__right-side__name-and-time__time">
+          </div>
+          <div className="swarm-comment__right-side__name-and-time__time">
             {formatTime(timestamp)}
-          </p>
+          </div>
         </div>
 
-        <p
+        <div
           className={
             errorFlag
               ? "swarm-comment__right-side__text__error"
@@ -66,7 +67,47 @@ const SwarmComment: React.FC<SwarmCommentWithErrorFlag> = ({
           }
         >
           {data}
-        </p>
+        </div>
+        {errorFlag && (
+          <button
+            onClick={resendComment}
+            className="swarm-comment__right-side__retry"
+            disabled={sending}
+          >
+            Retry
+          </button>
+        )}
+      </div>
+    </div>
+  ) : (
+    <div className="swarm-comment own">
+      <div className="swarm-comment__left-side">
+        <AvatarMonogram
+          letters={createMonogram(user)}
+          color="#333333"
+          backgroundColor="#FF8A5033"
+        />
+      </div>
+
+      <div className="swarm-comment__right-side">
+        <div className="swarm-comment__right-side__name-and-time own">
+          <div className="swarm-comment__right-side__name-and-time__username">
+            {user}
+          </div>
+          <div className="swarm-comment__right-side__name-and-time__time">
+            {formatTime(timestamp)}
+          </div>
+        </div>
+
+        <div
+          className={
+            errorFlag
+              ? "swarm-comment__right-side__text__error"
+              : "swarm-comment__right-side__text own"
+          }
+        >
+          {data}
+        </div>
         {errorFlag && (
           <button
             onClick={resendComment}
