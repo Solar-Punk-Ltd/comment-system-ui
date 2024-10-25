@@ -7,8 +7,16 @@ interface AvatarMonogramProps {
   backgroundColor?: string;
 }
 
-const AvatarMonogram: React.FC<AvatarMonogramProps> = ({ letters }) => {
-  return <div className="avatar-monogram">{letters}</div>;
+const AvatarMonogram: React.FC<AvatarMonogramProps> = ({
+  letters,
+  color,
+  backgroundColor,
+}) => {
+  return (
+    <div className="avatar-monogram" style={{ color, backgroundColor }}>
+      {letters}
+    </div>
+  );
 };
 
 export default AvatarMonogram;
