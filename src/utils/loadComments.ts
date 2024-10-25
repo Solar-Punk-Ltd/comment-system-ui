@@ -53,10 +53,9 @@ export const loadLatestComments = async (
 
     const bee = new Bee(beeApiUrl);
     const topicHex: Topic = bee.makeFeedTopic(topic);
-    const endIx =
-      latestComment.nextIndex && latestComment.nextIndex > 0
-        ? latestComment.nextIndex - 1
-        : 0;
+    const nextIndex =
+      latestComment.nextIndex === undefined ? 0 : latestComment.nextIndex;
+    const endIx = nextIndex === 0 ? 0 : nextIndex - 1;
     const startIx = endIx > numOfComments ? endIx - numOfComments + 1 : 0;
     const comments = await readCommentsAsync({
       stamp: stamp,
@@ -69,7 +68,7 @@ export const loadLatestComments = async (
     });
     latestComments = {
       comments: comments,
-      nextIndex: endIx + 1,
+      nextIndex: nextIndex,
     };
     console.log(
       `loading the latest ${numOfComments} comments of topic ${topic} success`
@@ -100,20 +99,27 @@ export const loadNextComments = async (
       signer,
       beeApiUrl
     );
-    if (isEmpty(latestComment) || !latestComment.nextIndex) {
+    if (isEmpty(latestComment)) {
       return {} as CommentsWithIndex;
     }
-    if (latestComment.nextIndex - 1 <= prevEndIx) {
+
+    const nextIndex =
+      latestComment.nextIndex === undefined ? 0 : latestComment.nextIndex;
+    if (prevEndIx === 0) {
+      if (nextIndex === 0) {
+        return {} as CommentsWithIndex;
+      }
+    } else if (nextIndex - 1 <= prevEndIx) {
       return {} as CommentsWithIndex;
     }
 
     const bee = new Bee(beeApiUrl);
     const topicHex: Topic = bee.makeFeedTopic(topic);
     let endIx;
-    if (prevEndIx + numOfComments < latestComment.nextIndex) {
+    if (prevEndIx + numOfComments < nextIndex) {
       endIx = prevEndIx + numOfComments - 1;
     } else {
-      endIx = latestComment.nextIndex - 1;
+      endIx = nextIndex - 1 > 0 ? nextIndex - 1 : 0;
     }
 
     const comments = await readCommentsAsync({
