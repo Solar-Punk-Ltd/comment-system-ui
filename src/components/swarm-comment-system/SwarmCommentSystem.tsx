@@ -66,8 +66,11 @@ export const SwarmCommentSystem: React.FC<SwarmCommentSystemProps> = ({
   const topicHex: Topic = bee.makeFeedTopic(topic);
   const [comments, setComments] = useState<SwarmCommentWithErrorFlag[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
-  const [currentStartIx, setCurrentStartIx] = useState<number>(startIx || 0);
-  const [currentEndIx, setCurrentEndIx] = useState<number>(endIx || 0);
+  const [sending, setSending] = useState<boolean>(false);
+  const [currentStartIx, setCurrentStartIx] = useState<number | undefined>(
+    startIx
+  );
+  const [currentEndIx, setCurrentEndIx] = useState<number | undefined>(endIx);
 
   const commentsToRead = numOfComments || DEFAULT_NUM_OF_COMMENTS;
 
@@ -100,11 +103,12 @@ export const SwarmCommentSystem: React.FC<SwarmCommentSystemProps> = ({
         "updated comment list with new comments: ",
         newComments.comments
       );
-      const newEndIx = newComments.nextIndex - 1;
+      const newEndIx =
+        newComments.nextIndex > 0 ? newComments.nextIndex - 1 : 0;
       const newStartIx =
         newEndIx - commentsToRead > 0 ? newEndIx - commentsToRead + 1 : 0;
       setCurrentStartIx(() => newStartIx);
-      setCurrentEndIx(() => newEndIx);
+      setCurrentEndIx(newEndIx);
       // return the newly read comments and the last index to the parent component
       if (onRead) {
         onRead(newComments.comments, newEndIx);
@@ -116,7 +120,6 @@ export const SwarmCommentSystem: React.FC<SwarmCommentSystemProps> = ({
 
   // Will load comments for the given topic (which is the room-name)
   // TODO: auto-scroll to bottom when new comments are loaded
-  // TODO: loadnextcomments updated the list in a wrong way, somehow overwrites the preloaded list
   const loadComments = async () => {
     try {
       setLoading(true);
@@ -173,10 +176,10 @@ export const SwarmCommentSystem: React.FC<SwarmCommentSystemProps> = ({
   };
 
   const sendComment = async (comment: SwarmCommentWithErrorFlag) => {
+    setSending(true);
     try {
       // trying to write to the next known index
-      const expNextIx = currentEndIx + 1;
-      console.log("writing comment to index: ", expNextIx);
+      const expNextIx = currentEndIx === undefined ? 0 : currentEndIx + 1;
       const plainCommentReq: CommentRequest = {
         data: comment.data,
         timestamp: comment.timestamp,
@@ -196,7 +199,6 @@ export const SwarmCommentSystem: React.FC<SwarmCommentSystemProps> = ({
       if (!newComment || Array.from(Object.keys(newComment)).length === 0) {
         throw "Comment write failed, empty response!";
       }
-      console.log("Write result ", newComment);
       // need to check if the comment was written successfully to the expected index
       // commentCheck.nexitIx is undefined if the read ix is defined
       const commentCheck = await readSingleComment({
@@ -216,39 +218,46 @@ export const SwarmCommentSystem: React.FC<SwarmCommentSystemProps> = ({
         throw `comment check failed, expected "${comment.data}", got: "${commentCheck.comment.data}".
                 Expected timestamp: ${comment.timestamp}, got: ${commentCheck.comment.timestamp}`;
       }
+      console.log("Writing a new comment was successful: ", newComment);
 
       if (comment.error === true) {
         onResend(comment);
       } else {
         setComments((prevComments) => [...prevComments, comment]);
       }
-
-      setCurrentEndIx((prevEndIx) => prevEndIx + 1);
+      setCurrentEndIx(expNextIx);
       if (onComment) {
         onComment(newComment);
       }
     } catch (err) {
       console.log("writing comments error: ", err);
       onFailure(comment);
+      setSending(false);
       throw err;
     }
+    setSending(false);
   };
 
   // loading new comments in every 10 seconds
   const updateNextCommentsCb = useCallback(async () => {
-    if (loading) {
+    if (loading || sending) {
       return;
     }
+    const validEndIx = currentEndIx === undefined ? 0 : currentEndIx;
     try {
       const newComments = await loadNextComments(
         stamp,
         topic,
         signer,
         beeApiUrl,
-        currentEndIx,
+        validEndIx,
         DEFAULT_NEW_COMMENTS_TO_READ
       );
-      if (newComments.nextIndex > currentEndIx + 1) {
+      if (
+        (newComments.nextIndex !== undefined &&
+          newComments.nextIndex > validEndIx + 1) ||
+        (currentEndIx === undefined && newComments.nextIndex > 0)
+      ) {
         updateCommentList(newComments);
         console.log(
           `${newComments.comments.length} new commetns arrived, list is updated`
@@ -257,7 +266,7 @@ export const SwarmCommentSystem: React.FC<SwarmCommentSystemProps> = ({
     } catch (err) {
       console.log("fetching new comments error: ", err);
     }
-  }, [currentEndIx, loading]);
+  }, [currentEndIx, loading, sending]);
 
   useEffect(() => {
     const interval = setInterval(async () => {
