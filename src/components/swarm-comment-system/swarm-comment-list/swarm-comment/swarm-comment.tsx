@@ -35,7 +35,7 @@ const SwarmComment: React.FC<SwarmCommentWithErrorFlag> = ({
     setSending(true);
     try {
       await resend(commentObj);
-      setErrorFlag(true);
+      setErrorFlag(false);
     } catch (err) {
       setErrorFlag(true);
       console.log("resend comment error: ", err);
