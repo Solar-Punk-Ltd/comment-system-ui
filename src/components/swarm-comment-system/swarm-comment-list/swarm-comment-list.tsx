@@ -24,7 +24,7 @@ const SwarmCommentList: React.FC<SwarmCommentListProps> = ({
         ) : (
           <>
             <p>There are no comments yet.</p>
-            <p>Start the conversation!"</p>
+            <p>Start the conversation!</p>
           </>
         )}
       </div>
