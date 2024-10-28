@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { Bee, Signer, Topic } from "@ethersphere/bee-js";
 import {
   Comment,
@@ -72,6 +72,7 @@ export const SwarmCommentSystem: React.FC<SwarmCommentSystemProps> = ({
   );
   const [currentEndIx, setCurrentEndIx] = useState<number | undefined>(endIx);
 
+  const endRef = useRef<number>();
   const commentsToRead = numOfComments || DEFAULT_NUM_OF_COMMENTS;
 
   /** If the room already exists, it will load the comments,
@@ -88,6 +89,7 @@ export const SwarmCommentSystem: React.FC<SwarmCommentSystemProps> = ({
     } else {
       init();
     }
+    endRef.current = currentEndIx;
   }, []);
 
   const updateCommentList = (newComments: CommentsWithIndex) => {
@@ -110,6 +112,7 @@ export const SwarmCommentSystem: React.FC<SwarmCommentSystemProps> = ({
         newEndIx - commentsToRead > 0 ? newEndIx - commentsToRead + 1 : 0;
       setCurrentStartIx(() => newStartIx);
       setCurrentEndIx(newEndIx);
+      endRef.current = newEndIx;
       // return the newly read comments and the last index to the parent component
       if (onRead) {
         onRead(newComments.comments, newEndIx);
@@ -232,6 +235,7 @@ export const SwarmCommentSystem: React.FC<SwarmCommentSystemProps> = ({
         setComments((prevComments) => [...prevComments, comment]);
       }
       setCurrentEndIx(expNextIx);
+      endRef.current = expNextIx;
       if (onComment) {
         onComment(newComment);
       }
@@ -248,7 +252,7 @@ export const SwarmCommentSystem: React.FC<SwarmCommentSystemProps> = ({
     if (loading || sending) {
       return;
     }
-    const validEndIx = currentEndIx === undefined ? 0 : currentEndIx;
+    const validEndIx = endRef.current === undefined ? 0 : endRef.current;
     try {
       const newComments = await loadNextComments(
         stamp,
@@ -261,7 +265,7 @@ export const SwarmCommentSystem: React.FC<SwarmCommentSystemProps> = ({
       if (
         (newComments.nextIndex !== undefined &&
           newComments.nextIndex > validEndIx + 1) ||
-        (currentEndIx === undefined && newComments.nextIndex > 0)
+        (endRef.current === undefined && newComments.nextIndex > 0)
       ) {
         updateCommentList(newComments);
         console.log(
