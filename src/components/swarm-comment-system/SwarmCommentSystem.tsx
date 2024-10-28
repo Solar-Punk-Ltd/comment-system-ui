@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { Bee, Signer, Topic } from "@ethersphere/bee-js";
 import {
   Comment,
@@ -45,7 +45,7 @@ export interface SwarmCommentSystemProps {
   startIx?: number;
   endIx?: number;
   onComment?: (newComment: Comment) => void;
-  onRead?: (newComments: Comment[], end: number) => void;
+  onRead?: (newComments: Comment[], end: number | undefined) => void;
 }
 
 export const SwarmCommentSystem: React.FC<SwarmCommentSystemProps> = ({
@@ -72,6 +72,7 @@ export const SwarmCommentSystem: React.FC<SwarmCommentSystemProps> = ({
   );
   const [currentEndIx, setCurrentEndIx] = useState<number | undefined>(endIx);
 
+  const endRef = useRef<number>();
   const commentsToRead = numOfComments || DEFAULT_NUM_OF_COMMENTS;
 
   /** If the room already exists, it will load the comments,
@@ -88,6 +89,7 @@ export const SwarmCommentSystem: React.FC<SwarmCommentSystemProps> = ({
     } else {
       init();
     }
+    endRef.current = currentEndIx;
   }, []);
 
   const updateCommentList = (newComments: CommentsWithIndex) => {
@@ -105,10 +107,12 @@ export const SwarmCommentSystem: React.FC<SwarmCommentSystemProps> = ({
       );
       const newEndIx =
         newComments.nextIndex > 0 ? newComments.nextIndex - 1 : 0;
+      // TODO: startix shall be updated when scrolling is implemented
       const newStartIx =
         newEndIx - commentsToRead > 0 ? newEndIx - commentsToRead + 1 : 0;
       setCurrentStartIx(() => newStartIx);
       setCurrentEndIx(newEndIx);
+      endRef.current = newEndIx;
       // return the newly read comments and the last index to the parent component
       if (onRead) {
         onRead(newComments.comments, newEndIx);
@@ -131,7 +135,13 @@ export const SwarmCommentSystem: React.FC<SwarmCommentSystemProps> = ({
         commentsToRead
       );
 
-      updateCommentList(newComments);
+      if (isEmpty(newComments)) {
+        if (onRead) {
+          onRead([], undefined);
+        }
+      } else {
+        updateCommentList(newComments);
+      }
     } catch (err) {
       console.log("loading comments error: ", err);
     } finally {
@@ -148,14 +158,13 @@ export const SwarmCommentSystem: React.FC<SwarmCommentSystemProps> = ({
       console.log(
         `found error-flagged comment at index: ${foundIX}, removing it...`
       );
-      setComments((prevComments) => {
-        prevComments.splice(foundIX, 1);
-        prevComments.push({
-          ...comment,
-          error: false,
-        });
-        return prevComments;
+      const tmpComments = [...comments];
+      tmpComments.splice(foundIX, 1);
+      tmpComments.push({
+        ...comment,
+        error: false,
       });
+      setComments(tmpComments);
     }
   };
 
@@ -226,11 +235,11 @@ export const SwarmCommentSystem: React.FC<SwarmCommentSystemProps> = ({
         setComments((prevComments) => [...prevComments, comment]);
       }
       setCurrentEndIx(expNextIx);
+      endRef.current = expNextIx;
       if (onComment) {
         onComment(newComment);
       }
     } catch (err) {
-      console.log("writing comments error: ", err);
       onFailure(comment);
       setSending(false);
       throw err;
@@ -243,7 +252,7 @@ export const SwarmCommentSystem: React.FC<SwarmCommentSystemProps> = ({
     if (loading || sending) {
       return;
     }
-    const validEndIx = currentEndIx === undefined ? 0 : currentEndIx;
+    const validEndIx = endRef.current === undefined ? 0 : endRef.current;
     try {
       const newComments = await loadNextComments(
         stamp,
@@ -256,7 +265,7 @@ export const SwarmCommentSystem: React.FC<SwarmCommentSystemProps> = ({
       if (
         (newComments.nextIndex !== undefined &&
           newComments.nextIndex > validEndIx + 1) ||
-        (currentEndIx === undefined && newComments.nextIndex > 0)
+        (endRef.current === undefined && newComments.nextIndex > 0)
       ) {
         updateCommentList(newComments);
         console.log(
