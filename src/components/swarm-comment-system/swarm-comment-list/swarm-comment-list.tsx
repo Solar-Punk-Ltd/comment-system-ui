@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useRef } from "react";
 // import { CommentRequest } from "@solarpunkltd/comment-system";
 import "./swarm-comment-list.scss";
 import SwarmComment, {
@@ -16,9 +16,21 @@ const SwarmCommentList: React.FC<SwarmCommentListProps> = ({
   loading,
   resend,
 }) => {
+  const commentListRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    alert("before");
+    if (commentListRef.current) {
+      alert("scrolling");
+      commentListRef.current.scrollTop = commentListRef.current.scrollHeight;
+    }
+  }, [comments]);
+
   if (!comments || comments.length === 0) {
     return (
-      <div className="swarm-comment-system-comment-list__no-comment">
+      <div
+        ref={commentListRef}
+        className="swarm-comment-system-comment-list__no-comment"
+      >
         {loading ? (
           <p>Loading comments...</p>
         ) : (
