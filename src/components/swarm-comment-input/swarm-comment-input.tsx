@@ -20,7 +20,7 @@ const SwarmCommentInput: React.FC<SwarmCommentInputProps> = ({
   const [sending, setSending] = useState<boolean>(false);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter") {
+    if (e.key === "Enter" && !sending) {
       sendComment();
     }
   };
@@ -54,30 +54,22 @@ const SwarmCommentInput: React.FC<SwarmCommentInputProps> = ({
   };
 
   return (
-    <div
-      className={
-        sending ? "swarm-comment-input__processing" : "swarm-comment-input"
-      }
-    >
-      {sending ? (
-        <>{"Sending comment..."}</>
-      ) : (
-        <>
-          <input
-            value={commentToSend}
-            onChange={(e) => handleOnChange(e)}
-            onKeyDown={handleKeyDown}
-            className="swarm-comment-input__input"
-          />
-          <button
-            onClick={sendComment}
-            className="swarm-comment-input__send-button"
-            disabled={sending}
-          >
-            <SendIcon />
-          </button>
-        </>
-      )}
+    <div className="swarm-comment-input">
+      <>
+        <input
+          value={commentToSend}
+          onChange={(e) => handleOnChange(e)}
+          onKeyDown={handleKeyDown}
+          className="swarm-comment-input__input"
+        />
+        <button
+          onClick={sendComment}
+          className="swarm-comment-input__send-button"
+          disabled={sending}
+        >
+          <SendIcon />
+        </button>
+      </>
     </div>
   );
 };
