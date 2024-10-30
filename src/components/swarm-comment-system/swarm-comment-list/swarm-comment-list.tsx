@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useRef, useState } from "react";
 // import { CommentRequest } from "@solarpunkltd/comment-system";
 import "./swarm-comment-list.scss";
 import SwarmComment, {
@@ -16,6 +16,36 @@ const SwarmCommentList: React.FC<SwarmCommentListProps> = ({
   loading,
   resend,
 }) => {
+  const [autoscroll, setAutoscroll] = useState(true);
+  const commentListRef = useRef<HTMLDivElement>(null);
+  const handleScroll = () => {
+    if (commentListRef.current) {
+      const { scrollTop, scrollHeight, clientHeight } = commentListRef.current;
+
+      if (scrollTop + clientHeight < scrollHeight) {
+        setAutoscroll(false);
+      } else {
+        setAutoscroll(true);
+      }
+    }
+  };
+  useEffect(() => {
+    if (commentListRef.current) {
+      commentListRef.current.addEventListener("scroll", handleScroll);
+    }
+
+    return () => {
+      if (commentListRef.current) {
+        commentListRef.current.removeEventListener("scroll", handleScroll);
+      }
+    };
+  }, []);
+  useEffect(() => {
+    if (commentListRef.current && autoscroll) {
+      commentListRef.current.scrollTop = commentListRef.current.scrollHeight;
+    }
+  }, [comments]);
+
   if (!comments || comments.length === 0) {
     return (
       <div className="swarm-comment-system-comment-list__no-comment">
@@ -32,7 +62,7 @@ const SwarmCommentList: React.FC<SwarmCommentListProps> = ({
   }
 
   return (
-    <div className="swarm-comment-system-comment-list">
+    <div ref={commentListRef} className="swarm-comment-system-comment-list">
       {comments.map((c, ix) => (
         <SwarmComment
           data={c.data}
