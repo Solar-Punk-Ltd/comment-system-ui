@@ -1,5 +1,5 @@
-import React, { useEffect, useRef, useState } from "react";
-// import { CommentRequest } from "@solarpunkltd/comment-system";
+import React, { useEffect, useCallback, useState } from "react";
+import { CommentRequest } from "@solarpunkltd/comment-system";
 import "./swarm-comment-list.scss";
 import SwarmComment, {
   SwarmCommentWithErrorFlag,
@@ -9,42 +9,86 @@ interface SwarmCommentListProps {
   comments: SwarmCommentWithErrorFlag[];
   loading: boolean;
   resend?: (comment: SwarmCommentWithErrorFlag) => Promise<void>;
+  loadHistory?: () => Promise<CommentRequest[]>;
 }
 
 const SwarmCommentList: React.FC<SwarmCommentListProps> = ({
   comments,
   loading,
   resend,
+  loadHistory,
 }) => {
   const [autoscroll, setAutoscroll] = useState(true);
-  const commentListRef = useRef<HTMLDivElement>(null);
+  const [isAtTop, setIsAtTop] = useState(false);
+  const [loadingHistory, setLoadingHistory] = useState(false);
+  const [element, setElement] = useState<HTMLDivElement | null>();
+
+  const handleDivCb = useCallback((node: HTMLDivElement | null) => {
+    if (node !== null) {
+      setElement(node);
+    }
+  }, []);
+
+  // TODO: loading icon
   const handleScroll = () => {
-    if (commentListRef.current) {
-      const { scrollTop, scrollHeight, clientHeight } = commentListRef.current;
+    if (element) {
+      const { scrollTop, scrollHeight, clientHeight } = element;
 
       if (scrollTop + clientHeight < scrollHeight) {
         setAutoscroll(false);
       } else {
         setAutoscroll(true);
       }
+
+      // Check if scroll has reached the top
+      if (scrollTop === 0) {
+        setIsAtTop(true);
+      } else {
+        setIsAtTop(false);
+      }
     }
   };
+
   useEffect(() => {
-    if (commentListRef.current) {
-      commentListRef.current.addEventListener("scroll", handleScroll);
+    if (element) {
+      element.addEventListener("scroll", handleScroll);
     }
 
     return () => {
-      if (commentListRef.current) {
-        commentListRef.current.removeEventListener("scroll", handleScroll);
+      if (element) {
+        element.removeEventListener("scroll", handleScroll);
       }
     };
-  }, []);
+  }, [element]);
+
   useEffect(() => {
-    if (commentListRef.current && autoscroll) {
-      commentListRef.current.scrollTop = commentListRef.current.scrollHeight;
+    if (element && autoscroll) {
+      element.scrollTop = element.scrollHeight;
     }
   }, [comments]);
+
+  useEffect(() => {
+    const handleHistoryLoad = async () => {
+      if (loadHistory) {
+        setLoadingHistory(true);
+        const prevComments = await loadHistory();
+        // after loading history, scroll down
+        if (element) {
+          const { scrollTop } = element;
+          if (scrollTop === 0) {
+            const defaultCommentHeight = 78 + 40; // with 40px gap TODO: proper calculation
+            element.scrollTop = prevComments.length * defaultCommentHeight;
+            setIsAtTop(false);
+          }
+        }
+        setLoadingHistory(false);
+      }
+    };
+
+    if (isAtTop && !loadingHistory) {
+      handleHistoryLoad();
+    }
+  }, [isAtTop, loadingHistory, loadHistory]);
 
   if (!comments || comments.length === 0) {
     return (
@@ -62,7 +106,7 @@ const SwarmCommentList: React.FC<SwarmCommentListProps> = ({
   }
 
   return (
-    <div ref={commentListRef} className="swarm-comment-system-comment-list">
+    <div ref={handleDivCb} className="swarm-comment-system-comment-list">
       {comments.map((c, ix) => (
         <SwarmComment
           data={c.data}
