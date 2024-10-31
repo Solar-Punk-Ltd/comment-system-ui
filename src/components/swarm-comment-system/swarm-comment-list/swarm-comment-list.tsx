@@ -1,5 +1,5 @@
 import React, { useEffect, useCallback, useState } from "react";
-import { CommentRequest } from "@solarpunkltd/comment-system";
+import { UserComment } from "@solarpunkltd/comment-system";
 import "./swarm-comment-list.scss";
 import SwarmComment, {
   SwarmCommentWithErrorFlag,
@@ -8,13 +8,15 @@ import SwarmComment, {
 interface SwarmCommentListProps {
   comments: SwarmCommentWithErrorFlag[];
   loading: boolean;
+  filterEnabled?: boolean;
   resend?: (comment: SwarmCommentWithErrorFlag) => Promise<void>;
-  loadHistory?: () => Promise<CommentRequest[]>;
+  loadHistory?: () => Promise<UserComment[]>;
 }
 
 const SwarmCommentList: React.FC<SwarmCommentListProps> = ({
   comments,
   loading,
+  filterEnabled,
   resend,
   loadHistory,
 }) => {
@@ -105,13 +107,20 @@ const SwarmCommentList: React.FC<SwarmCommentListProps> = ({
     );
   }
 
+  const filteredComments = () => {
+    if (filterEnabled) {
+      return comments.filter((c) => c.message.flagged !== true);
+    }
+    return comments;
+  };
+
   return (
     <div ref={handleDivCb} className="swarm-comment-system-comment-list">
-      {comments.map((c, ix) => (
+      {filteredComments().map((c, ix) => (
         <SwarmComment
-          data={c.data}
-          user={c.user}
           key={ix}
+          message={{ text: c.message.text }}
+          username={c.username}
           timestamp={c.timestamp}
           error={c.error}
           resend={resend}
