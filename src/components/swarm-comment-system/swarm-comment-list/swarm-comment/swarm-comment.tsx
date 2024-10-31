@@ -10,7 +10,7 @@ export interface SwarmCommentWithErrorFlag extends CommentRequest {
   error?: boolean;
   resend?: (comment: SwarmCommentWithErrorFlag) => Promise<void>;
 }
-// TODO: disable input if resending
+
 const SwarmComment: React.FC<SwarmCommentWithErrorFlag> = ({
   user,
   data,
