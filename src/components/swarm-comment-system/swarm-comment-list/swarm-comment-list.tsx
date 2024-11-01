@@ -31,27 +31,27 @@ const SwarmCommentList: React.FC<SwarmCommentListProps> = ({
     }
   }, []);
 
-  // TODO: loading icon
-  const handleScroll = () => {
-    if (element) {
-      const { scrollTop, scrollHeight, clientHeight } = element;
-
-      if (scrollTop + clientHeight < scrollHeight) {
-        setAutoscroll(false);
-      } else {
-        setAutoscroll(true);
-      }
-
-      // Check if scroll has reached the top
-      if (scrollTop === 0) {
-        setIsAtTop(true);
-      } else {
-        setIsAtTop(false);
-      }
-    }
-  };
-
   useEffect(() => {
+    // TODO: loading icon
+    const handleScroll = () => {
+      if (element) {
+        const { scrollTop, scrollHeight, clientHeight } = element;
+
+        if (scrollTop + clientHeight < scrollHeight) {
+          setAutoscroll(false);
+        } else {
+          setAutoscroll(true);
+        }
+
+        // Check if scroll has reached the top
+        if (scrollTop === 0) {
+          setIsAtTop(true);
+        } else {
+          setIsAtTop(false);
+        }
+      }
+    };
+
     if (element) {
       element.addEventListener("scroll", handleScroll);
     }
@@ -67,7 +67,7 @@ const SwarmCommentList: React.FC<SwarmCommentListProps> = ({
     if (element && autoscroll) {
       element.scrollTop = element.scrollHeight;
     }
-  }, [comments]);
+  }, [element, autoscroll, comments]);
 
   useEffect(() => {
     const handleHistoryLoad = async () => {
@@ -90,7 +90,7 @@ const SwarmCommentList: React.FC<SwarmCommentListProps> = ({
     if (isAtTop && !loadingHistory) {
       handleHistoryLoad();
     }
-  }, [isAtTop, loadingHistory, loadHistory]);
+  }, [element, isAtTop, loadingHistory, loadHistory]);
 
   if (!comments || comments.length === 0) {
     return (
