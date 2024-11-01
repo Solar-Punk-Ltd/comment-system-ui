@@ -31,7 +31,7 @@ export const readLatestComment = async (
 
   return latestComment;
 };
-
+// TODO: test updated logic
 export const loadLatestComments = async (
   stamp: string,
   topic: string,
@@ -47,14 +47,25 @@ export const loadLatestComments = async (
       signer,
       beeApiUrl
     );
-    if (isEmpty(latestComment) || latestComment.nextIndex === undefined) {
+    if (
+      isEmpty(latestComment) ||
+      latestComment.nextIndex === undefined ||
+      latestComment.nextIndex === 0
+    ) {
       return {} as CommentsWithIndex;
+    }
+    // if there is only one comment, return it
+    if (latestComment.nextIndex === 1) {
+      return {
+        comments: [latestComment.comment],
+        nextIndex: latestComment.nextIndex,
+      } as CommentsWithIndex;
     }
 
     const bee = new Bee(beeApiUrl);
     const topicHex: Topic = bee.makeFeedTopic(topic);
-    const endIx =
-      latestComment.nextIndex === 0 ? 0 : latestComment.nextIndex - 1;
+    // the latest comment is already fetched
+    const endIx = latestComment.nextIndex - 2;
     const startIx = endIx > numOfComments ? endIx - numOfComments + 1 : 0;
     const comments = await readCommentsAsync({
       stamp: stamp,
@@ -66,7 +77,7 @@ export const loadLatestComments = async (
       endIx: endIx,
     });
     latestComments = {
-      comments: comments,
+      comments: [...comments, latestComment.comment],
       nextIndex: latestComment.nextIndex,
     };
   } catch (err) {
@@ -84,7 +95,7 @@ export const loadNextComments = async (
   topic: string,
   signer: Signer,
   beeApiUrl: string,
-  nextIx: number | undefined,
+  nextIx: number,
   numOfComments: number
 ): Promise<CommentsWithIndex> => {
   let nextComments = {} as CommentsWithIndex;
@@ -95,28 +106,29 @@ export const loadNextComments = async (
       signer,
       beeApiUrl
     );
-    if (isEmpty(latestComment) || latestComment.nextIndex === undefined) {
+    if (
+      isEmpty(latestComment) ||
+      latestComment.nextIndex === undefined ||
+      latestComment.nextIndex === 0 ||
+      latestComment.nextIndex <= nextIx
+    ) {
       return {} as CommentsWithIndex;
+    }
+    // if there is only one comment, return it
+    if (latestComment.nextIndex === 1) {
+      return {
+        comments: [latestComment.comment],
+        nextIndex: latestComment.nextIndex,
+      } as CommentsWithIndex;
     }
 
-    // comment list is empty and the next index is 0 means that there are no comments
-    if (nextIx === undefined) {
-      if (latestComment.nextIndex === 0) {
-        return {} as CommentsWithIndex;
-      }
-    } else if (latestComment.nextIndex <= nextIx) {
-      return {} as CommentsWithIndex;
-    }
     const startIx = nextIx === undefined ? 0 : nextIx;
     const bee = new Bee(beeApiUrl);
     const topicHex: Topic = bee.makeFeedTopic(topic);
     let endIx = startIx + numOfComments - 1;
     // read until the end of the list or until numOfComments is read
     if (endIx >= latestComment.nextIndex) {
-      endIx = latestComment.nextIndex - 1 > 0 ? latestComment.nextIndex - 1 : 0;
-    }
-    if (endIx < startIx) {
-      return {} as CommentsWithIndex;
+      endIx = latestComment.nextIndex - 2;
     }
 
     const comments = await readCommentsAsync({
@@ -128,8 +140,9 @@ export const loadNextComments = async (
       startIx: startIx,
       endIx: endIx,
     });
+    // the latest comment is already fetched
     nextComments = {
-      comments: comments,
+      comments: [...comments, latestComment.comment],
       nextIndex: endIx + 1,
     };
   } catch (err) {

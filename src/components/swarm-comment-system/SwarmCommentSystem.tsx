@@ -65,7 +65,7 @@ export const SwarmCommentSystem: React.FC<SwarmCommentSystemProps> = ({
   const [comments, setComments] = useState<SwarmCommentWithErrorFlag[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
 
-  const nextRef = useRef<number>();
+  const nextRef = useRef<number | undefined>();
   const commentsToRead = numOfComments || DEFAULT_NUM_OF_COMMENTS;
 
   useEffect(() => {
@@ -114,16 +114,16 @@ export const SwarmCommentSystem: React.FC<SwarmCommentSystemProps> = ({
   // Fetching comments periodically to see if we have the latest ones
   const loadNextCommentsCb = useCallback(async () => {
     try {
+      const validNextIx = nextRef.current === undefined ? 0 : nextRef.current;
       const newComments = await loadNextComments(
         stamp,
         topic,
         signer,
         beeApiUrl,
-        nextRef.current,
+        validNextIx,
         DEFAULT_NUM_OF_COMMENTS
       );
 
-      const validNextIx = nextRef.current === undefined ? 0 : nextRef.current;
       if (!isEmpty(newComments) && newComments.nextIndex > validNextIx) {
         setComments((prevComments) =>
           [...prevComments].concat(newComments.comments)
