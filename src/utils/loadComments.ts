@@ -25,7 +25,7 @@ export const readLatestComment = async (
       approvedFeedAddress: signer.address as unknown as string,
     });
   } catch (err) {
-    console.log(`loading the latest comment of topic ${topic} error: ${err}`);
+    console.error(`Loading the latest comment of topic ${topic} error: ${err}`);
     return {} as SingleComment;
   }
 
@@ -69,12 +69,9 @@ export const loadLatestComments = async (
       comments: comments,
       nextIndex: latestComment.nextIndex,
     };
-    console.log(
-      `loading the latest ${numOfComments} comments of topic ${topic} success`
-    );
   } catch (err) {
-    console.log(
-      `loading the last ${numOfComments} comments of topic ${topic} error: ${err}`
+    console.error(
+      `Loading the last ${numOfComments} comments of topic ${topic} error: ${err}`
     );
     return {} as CommentsWithIndex;
   }
@@ -87,7 +84,7 @@ export const loadNextComments = async (
   topic: string,
   signer: Signer,
   beeApiUrl: string,
-  currentNextIx: number | undefined,
+  nextIx: number | undefined,
   numOfComments: number
 ): Promise<CommentsWithIndex> => {
   let nextComments = {} as CommentsWithIndex;
@@ -103,15 +100,14 @@ export const loadNextComments = async (
     }
 
     // comment list is empty and the next index is 0 means that there are no comments
-    if (currentNextIx === undefined) {
+    if (nextIx === undefined) {
       if (latestComment.nextIndex === 0) {
         return {} as CommentsWithIndex;
       }
-    } else if (latestComment.nextIndex <= currentNextIx) {
+    } else if (latestComment.nextIndex <= nextIx) {
       return {} as CommentsWithIndex;
     }
-    const startIx = currentNextIx === undefined ? 0 : currentNextIx;
-
+    const startIx = nextIx === undefined ? 0 : nextIx;
     const bee = new Bee(beeApiUrl);
     const topicHex: Topic = bee.makeFeedTopic(topic);
     let endIx = startIx + numOfComments - 1;
@@ -136,11 +132,8 @@ export const loadNextComments = async (
       comments: comments,
       nextIndex: endIx + 1,
     };
-    console.log(
-      `loading the next ${numOfComments} comments of topic ${topic} success`
-    );
   } catch (err) {
-    `loading the next ${numOfComments} comments of topic ${topic} error: ${err}`;
+    `Loading the next ${numOfComments} comments of topic ${topic} error: ${err}`;
     return {} as CommentsWithIndex;
   }
 

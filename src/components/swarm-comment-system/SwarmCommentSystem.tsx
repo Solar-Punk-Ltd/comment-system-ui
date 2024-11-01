@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { Bee, Signer, Topic } from "@ethersphere/bee-js";
 import {
   Comment,
@@ -14,11 +14,7 @@ import SwarmCommentInput from "../swarm-comment-input/swarm-comment-input";
 import { SwarmCommentWithErrorFlag } from "./swarm-comment-list/swarm-comment/swarm-comment";
 import { loadLatestComments, loadNextComments } from "../../utils/loadComments";
 import { isEmpty } from "../../utils/helpers";
-import {
-  DEFAULT_NEW_COMMENTS_TO_READ,
-  DEFAULT_NUM_OF_COMMENTS,
-  TEN_SECONDS,
-} from "../../utils/constants";
+import { DEFAULT_NUM_OF_COMMENTS, THREE_SECONDS } from "../../utils/constants";
 
 /**
  * stamp - Postage stamp ID. If ommitted a first available stamp will be used.
@@ -29,7 +25,8 @@ import {
  * preloadedCommnets - pre-loaded comments to display, does not load comments from the feed
  * numOfComments - maximum number of comments to load
  * maxCharacterCount - maximum number of characters for a comment
- * onComment - callback for comment events
+ * filterEnabled - enables filtering of comments
+ * onComment - callback for write events
  * onRead - callback for read events
  */
 export interface SwarmCommentSystemProps {
@@ -67,58 +64,94 @@ export const SwarmCommentSystem: React.FC<SwarmCommentSystemProps> = ({
   const topicHex: Topic = bee.makeFeedTopic(topic);
   const [comments, setComments] = useState<SwarmCommentWithErrorFlag[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
-  const [sending, setSending] = useState<boolean>(false);
-  const [currentNextIx, setCurrentNextIx] = useState<number | undefined>(
-    undefined
-  );
 
+  const nextRef = useRef<number>();
   const commentsToRead = numOfComments || DEFAULT_NUM_OF_COMMENTS;
 
-  // Will load comments for the given topic (which is the room-name)
-  const init = async (): Promise<void> => {
-    setLoading(true);
+  useEffect(() => {
+    // Loads comments for the given topic
+    const init = async (): Promise<void> => {
+      setLoading(true);
+      try {
+        const newComments = await loadLatestComments(
+          stamp,
+          topic,
+          signer,
+          beeApiUrl,
+          commentsToRead
+        );
+
+        if (!isEmpty(newComments)) {
+          setComments(newComments.comments);
+          nextRef.current = newComments.nextIndex;
+          console.log(
+            `Loaded ${newComments.comments.length} comments of topic ${topic}`
+          );
+        }
+        // return the newly read comments and the next index to the parent component
+        if (onRead) {
+          onRead(newComments.comments || [], false, newComments.nextIndex);
+        }
+      } catch (err) {
+        console.error("Loading comments error: ", err);
+      }
+      setLoading(false);
+    };
+
+    if (preloadedCommnets) {
+      setLoading(true);
+      console.log(
+        `Preloaded ${preloadedCommnets.comments.length} comments of topic: ${topic}`
+      );
+      setComments(preloadedCommnets.comments);
+      nextRef.current = preloadedCommnets.nextIndex;
+      setLoading(false);
+    } else {
+      init();
+    }
+  }, []);
+
+  // Fetching comments periodically to see if we have the latest ones
+  const loadNextCommentsCb = useCallback(async () => {
     try {
-      const newComments = await loadLatestComments(
+      const newComments = await loadNextComments(
         stamp,
         topic,
         signer,
         beeApiUrl,
-        commentsToRead
+        nextRef.current,
+        DEFAULT_NUM_OF_COMMENTS
       );
 
-      if (isEmpty(newComments)) {
-        if (onRead) {
-          onRead([], false, undefined);
-        }
-      } else {
-        updateCommentList(newComments);
-      }
-    } catch (err) {
-      console.log("loading comments error: ", err);
-    }
-    setLoading(false);
-  };
-
-  const updateCommentList = (newComments: CommentsWithIndex) => {
-    if (!isEmpty(newComments)) {
-      if (!loading) {
+      const validNextIx = nextRef.current === undefined ? 0 : nextRef.current;
+      if (!isEmpty(newComments) && newComments.nextIndex > validNextIx) {
         setComments((prevComments) =>
           [...prevComments].concat(newComments.comments)
         );
-      } else {
-        setComments([...comments].concat(newComments.comments));
+        nextRef.current = newComments.nextIndex;
+        if (onRead) {
+          onRead(newComments.comments, false, newComments.nextIndex);
+        }
+
+        console.log(
+          `${newComments.comments.length} new commetns arrived, next index: ${newComments.nextIndex}`
+        );
       }
-      console.log(
-        "updated comment list with new comments: ",
-        newComments.comments
-      );
-      setCurrentNextIx(newComments.nextIndex);
-      // return the newly read comments and the next index to the parent component
-      if (onRead) {
-        onRead(newComments.comments, false, newComments.nextIndex);
-      }
+    } catch (err) {
+      console.error("Fetching new comments error: ", err);
     }
-  };
+  }, [topic, beeApiUrl, signer, stamp, onRead]);
+
+  useEffect(() => {
+    if (loading) {
+      return;
+    }
+    const interval = setInterval(async () => {
+      loadNextCommentsCb();
+    }, THREE_SECONDS);
+
+    return () => clearInterval(interval);
+  }, [loading, loadNextCommentsCb]);
 
   // if resend is succesful then find, remove and push the currently error-flagged comment to the end of the list
   const onResend = (comment: SwarmCommentWithErrorFlag) => {
@@ -130,7 +163,7 @@ export const SwarmCommentSystem: React.FC<SwarmCommentSystemProps> = ({
     );
     if (foundIX > -1) {
       console.log(
-        `found error-flagged comment at index: ${foundIX}, removing it...`
+        `Resend success, removing failed comment at index: ${foundIX}`
       );
       const tmpComments = [...comments];
       tmpComments.splice(foundIX, 1);
@@ -161,10 +194,9 @@ export const SwarmCommentSystem: React.FC<SwarmCommentSystemProps> = ({
   };
 
   const sendComment = async (comment: SwarmCommentWithErrorFlag) => {
-    setSending(true);
     try {
       // trying to write to the next known index
-      const expNextIx = currentNextIx === undefined ? 0 : currentNextIx;
+      const expNextIx = nextRef.current === undefined ? 0 : nextRef.current;
       const commentObj: Comment = {
         text: comment.message.text,
         messageId: comment.message.messageId,
@@ -183,7 +215,7 @@ export const SwarmCommentSystem: React.FC<SwarmCommentSystemProps> = ({
         startIx: expNextIx,
       });
 
-      if (!newComment || Array.from(Object.keys(newComment)).length === 0) {
+      if (isEmpty(newComment)) {
         throw "Comment write failed, empty response!";
       }
       // need to check if the comment was written successfully to the expected index
@@ -209,6 +241,7 @@ export const SwarmCommentSystem: React.FC<SwarmCommentSystemProps> = ({
         `Writing a new comment to index ${expNextIx} was successful: `,
         newComment
       );
+      // use filter flag set by AI, only available if reading back was successful
       comment.message.flagged = commentCheck.comment.message.flagged;
 
       if (comment.error === true) {
@@ -216,74 +249,22 @@ export const SwarmCommentSystem: React.FC<SwarmCommentSystemProps> = ({
       } else {
         setComments((prevComments) => [...prevComments, comment]);
       }
-      setCurrentNextIx(expNextIx + 1);
+      nextRef.current = expNextIx + 1;
       if (onComment) {
         onComment(newComment, expNextIx + 1);
       }
     } catch (err) {
       onFailure(comment);
-      setSending(false);
       throw err;
     }
-    setSending(false);
   };
-
-  // loading new comments in every 10 seconds
-  const updateNextCommentsCb = useCallback(async () => {
-    if (loading || sending) {
-      return;
-    }
-    try {
-      const newComments = await loadNextComments(
-        stamp,
-        topic,
-        signer,
-        beeApiUrl,
-        currentNextIx,
-        DEFAULT_NEW_COMMENTS_TO_READ
-      );
-
-      const validNextIx = currentNextIx === undefined ? 0 : currentNextIx;
-      if (!isEmpty(newComments) && newComments.nextIndex > validNextIx) {
-        updateCommentList(newComments);
-        console.log(
-          `${newComments.comments.length} new commetns arrived, list is updated, new next index: ${newComments.nextIndex}`
-        );
-      }
-    } catch (err) {
-      console.log("fetching new comments error: ", err);
-    }
-  }, [currentNextIx, loading, sending]);
-
-  useEffect(() => {
-    if (preloadedCommnets) {
-      setLoading(true);
-      console.log(`preloading comments for topic: ${topic}`);
-      setComments(preloadedCommnets.comments);
-      setCurrentNextIx(preloadedCommnets.nextIndex);
-      setLoading(false);
-    } else {
-      init();
-    }
-  }, []);
-
-  useEffect(() => {
-    if (loading) {
-      return;
-    }
-    const interval = setInterval(async () => {
-      updateNextCommentsCb();
-    }, TEN_SECONDS);
-
-    return () => clearInterval(interval);
-  }, [loading, updateNextCommentsCb]);
 
   // load previous DEFAULT_NUM_OF_COMMENTS comments up to the currently loaded first comment until the 0th comment is reached
   const loadHistory = async (): Promise<UserComment[]> => {
-    if (currentNextIx !== undefined) {
+    if (nextRef.current !== undefined) {
       const currentStartIx =
-        currentNextIx > comments.length
-          ? currentNextIx - comments.length - 1
+        nextRef.current > comments.length
+          ? nextRef.current - comments.length - 1
           : 0;
       if (currentStartIx > 0) {
         const newStartIx =
@@ -302,15 +283,15 @@ export const SwarmCommentSystem: React.FC<SwarmCommentSystemProps> = ({
             endIx: currentStartIx,
           });
           console.log(
-            `loaded ${prevComments.length} previous comments from history`
+            `Loaded ${prevComments.length} previous comments from history`
           );
           setComments([...prevComments, ...comments]);
           if (onRead) {
-            onRead(prevComments, true, currentNextIx);
+            onRead(prevComments, true, nextRef.current);
           }
           return prevComments;
-        } catch (error) {
-          console.log("loading comment history error: ", error);
+        } catch (err) {
+          console.error("Loading comment history error: ", err);
         }
       }
     }

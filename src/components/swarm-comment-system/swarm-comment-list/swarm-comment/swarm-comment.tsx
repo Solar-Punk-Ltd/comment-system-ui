@@ -42,7 +42,7 @@ const SwarmComment: React.FC<SwarmCommentWithErrorFlag> = ({
       setErrorFlag(false);
     } catch (err) {
       setErrorFlag(true);
-      console.log("resend comment error: ", err);
+      console.error("Resend comment error: ", err);
     }
 
     setSending(false);

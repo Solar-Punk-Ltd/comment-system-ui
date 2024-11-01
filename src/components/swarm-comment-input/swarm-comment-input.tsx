@@ -50,7 +50,7 @@ const SwarmCommentInput: React.FC<SwarmCommentInputProps> = ({
     try {
       await onSubmit(userCommentObj);
     } catch (err) {
-      console.log("onSubmit error: ", err);
+      console.error("Submit comment error: ", err);
     }
 
     setCommentToSend("");
