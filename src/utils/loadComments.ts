@@ -31,7 +31,7 @@ export const readLatestComment = async (
 
   return latestComment;
 };
-// TODO: test updated logic
+
 export const loadLatestComments = async (
   stamp: string,
   topic: string,
