@@ -1,6 +1,6 @@
 // import React, { useState, useRef, ChangeEvent, useEffect } from "react";
 import React, { useState, ChangeEvent } from "react";
-import { CommentRequest } from "@solarpunkltd/comment-system";
+import { Comment, UserComment } from "@solarpunkltd/comment-system";
 import "./swarm-comment-input.scss";
 import SendIcon from "../icons/SendIcon/SendIcon";
 import { MAX_CHARACTER_COUNT } from "../../utils/constants";
@@ -8,7 +8,7 @@ import { MAX_CHARACTER_COUNT } from "../../utils/constants";
 interface SwarmCommentInputProps {
   username: string;
   maxCharacterCount?: number;
-  onSubmit: (comment: CommentRequest) => Promise<void>;
+  onSubmit: (comment: UserComment) => Promise<void>;
 }
 
 const SwarmCommentInput: React.FC<SwarmCommentInputProps> = ({
@@ -36,15 +36,19 @@ const SwarmCommentInput: React.FC<SwarmCommentInputProps> = ({
 
   const sendComment = async () => {
     if (!commentToSend) return;
-    const commentObj: CommentRequest = {
-      data: commentToSend,
+    const commentObj: Comment = {
+      text: commentToSend,
+    };
+
+    const userCommentObj: UserComment = {
+      message: commentObj,
       timestamp: Date.now(),
-      user: username,
+      username: username,
     };
 
     setSending(true);
     try {
-      await onSubmit(commentObj);
+      await onSubmit(userCommentObj);
     } catch (err) {
       console.log("onSubmit error: ", err);
     }

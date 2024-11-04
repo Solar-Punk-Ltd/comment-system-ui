@@ -2,7 +2,7 @@ import { useEffect, useState, useCallback } from "react";
 import { Bee, Signer, Topic } from "@ethersphere/bee-js";
 import {
   Comment,
-  CommentRequest,
+  UserComment,
   CommentsWithIndex,
   writeCommentToIndex,
   readSingleComment,
@@ -41,9 +41,10 @@ export interface SwarmCommentSystemProps {
   preloadedCommnets?: CommentsWithIndex;
   numOfComments?: number;
   maxCharacterCount?: number;
-  onComment?: (newComment: Comment, next: number | undefined) => void;
+  filterEnabled?: boolean;
+  onComment?: (newComment: UserComment, next: number | undefined) => void;
   onRead?: (
-    newComments: Comment[],
+    newComments: UserComment[],
     isHistory: boolean,
     next: number | undefined
   ) => void;
@@ -58,6 +59,7 @@ export const SwarmCommentSystem: React.FC<SwarmCommentSystemProps> = ({
   preloadedCommnets,
   numOfComments,
   maxCharacterCount,
+  filterEnabled,
   onComment,
   onRead,
 }) => {
@@ -121,7 +123,10 @@ export const SwarmCommentSystem: React.FC<SwarmCommentSystemProps> = ({
   // if resend is succesful then find, remove and push the currently error-flagged comment to the end of the list
   const onResend = (comment: SwarmCommentWithErrorFlag) => {
     const foundIX = comments.findIndex(
-      (c) => c.error && c.data === comment.data && c.id === comment.id
+      (c) =>
+        c.error &&
+        c.message.text === comment.message.text &&
+        c.message.messageId === comment.message.messageId
     );
     if (foundIX > -1) {
       console.log(
@@ -140,7 +145,10 @@ export const SwarmCommentSystem: React.FC<SwarmCommentSystemProps> = ({
   // only add failed comments to the list, if not already present
   const onFailure = (comment: SwarmCommentWithErrorFlag) => {
     const foundIX = comments.findIndex(
-      (c) => c.error && c.data === comment.data && c.id === comment.id
+      (c) =>
+        c.error &&
+        c.message.text === comment.message.text &&
+        c.message.messageId === comment.message.messageId
     );
     if (foundIX < 0) {
       const tmpComments = [...comments];
@@ -157,13 +165,15 @@ export const SwarmCommentSystem: React.FC<SwarmCommentSystemProps> = ({
     try {
       // trying to write to the next known index
       const expNextIx = currentNextIx === undefined ? 0 : currentNextIx;
-      const plainCommentReq: CommentRequest = {
-        data: comment.data,
+      const commentObj: Comment = {
+        text: comment.message.text,
+        messageId: comment.message.messageId,
+        threadId: comment.message.threadId,
+      };
+      const plainCommentReq: UserComment = {
+        message: commentObj,
         timestamp: comment.timestamp,
-        user: comment.user,
-        id: comment.id,
-        tags: comment.tags,
-        replyId: comment.replyId,
+        username: comment.username,
       };
       const newComment = await writeCommentToIndex(plainCommentReq, {
         stamp,
@@ -188,17 +198,18 @@ export const SwarmCommentSystem: React.FC<SwarmCommentSystemProps> = ({
       });
       if (
         !commentCheck ||
-        commentCheck.comment.data !== comment.data ||
+        commentCheck.comment.message.text !== comment.message.text ||
         commentCheck.comment.timestamp !== comment.timestamp
       ) {
         // if another comment is found at the expected index then updateNextCommentsCb shall find it and update the list
-        throw `comment check failed, expected "${comment.data}", got: "${commentCheck.comment.data}".
+        throw `comment check failed, expected "${comment.message.text}", got: "${commentCheck.comment.message.text}".
                 Expected timestamp: ${comment.timestamp}, got: ${commentCheck.comment.timestamp}`;
       }
       console.log(
         `Writing a new comment to index ${expNextIx} was successful: `,
         newComment
       );
+      comment.message.flagged = commentCheck.comment.message.flagged;
 
       if (comment.error === true) {
         onResend(comment);
@@ -268,7 +279,7 @@ export const SwarmCommentSystem: React.FC<SwarmCommentSystemProps> = ({
   }, [loading, updateNextCommentsCb]);
 
   // load previous DEFAULT_NUM_OF_COMMENTS comments up to the currently loaded first comment until the 0th comment is reached
-  const loadHistory = async (): Promise<CommentRequest[]> => {
+  const loadHistory = async (): Promise<UserComment[]> => {
     if (currentNextIx !== undefined) {
       const currentStartIx =
         currentNextIx > comments.length
@@ -312,6 +323,7 @@ export const SwarmCommentSystem: React.FC<SwarmCommentSystemProps> = ({
       <SwarmCommentList
         comments={comments}
         loading={loading}
+        filterEnabled={filterEnabled || false}
         resend={sendComment}
         loadHistory={loadHistory}
       />
