@@ -13,11 +13,10 @@ export const readLatestComment = async (
   signer: Signer,
   beeApiUrl: string
 ): Promise<SingleComment> => {
-  const bee = new Bee(beeApiUrl);
-  const topicHex: Topic = bee.makeFeedTopic(topic);
-  let latestComment: SingleComment;
   try {
-    latestComment = await readSingleComment({
+    const bee = new Bee(beeApiUrl);
+    const topicHex: Topic = bee.makeFeedTopic(topic);
+    return await readSingleComment({
       stamp: stamp,
       identifier: topicHex,
       signer: signer,
@@ -28,8 +27,6 @@ export const readLatestComment = async (
     console.error(`Loading the latest comment of topic ${topic} error: ${err}`);
     return {} as SingleComment;
   }
-
-  return latestComment;
 };
 
 export const loadLatestComments = async (
@@ -39,7 +36,6 @@ export const loadLatestComments = async (
   beeApiUrl: string,
   numOfComments: number
 ): Promise<CommentsWithIndex> => {
-  let latestComments = {} as CommentsWithIndex;
   try {
     const latestComment = await readLatestComment(
       stamp,
@@ -76,18 +72,16 @@ export const loadLatestComments = async (
       startIx: startIx,
       endIx: endIx,
     });
-    latestComments = {
+    return {
       comments: [...comments, latestComment.comment],
       nextIndex: latestComment.nextIndex,
-    };
+    } as CommentsWithIndex;
   } catch (err) {
     console.error(
       `Loading the last ${numOfComments} comments of topic ${topic} error: ${err}`
     );
     return {} as CommentsWithIndex;
   }
-
-  return latestComments;
 };
 
 export const loadNextComments = async (
@@ -98,7 +92,6 @@ export const loadNextComments = async (
   nextIx: number,
   numOfComments: number
 ): Promise<CommentsWithIndex> => {
-  let nextComments = {} as CommentsWithIndex;
   try {
     const latestComment = await readLatestComment(
       stamp,
@@ -141,14 +134,12 @@ export const loadNextComments = async (
       endIx: endIx,
     });
     // the latest comment is already fetched
-    nextComments = {
+    return {
       comments: [...comments, latestComment.comment],
       nextIndex: endIx + 1,
-    };
+    } as CommentsWithIndex;
   } catch (err) {
     `Loading the next ${numOfComments} comments of topic ${topic} error: ${err}`;
     return {} as CommentsWithIndex;
   }
-
-  return nextComments;
 };

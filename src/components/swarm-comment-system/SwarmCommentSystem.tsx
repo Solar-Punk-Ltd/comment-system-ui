@@ -12,7 +12,7 @@ import "./swarm-comment-system.scss";
 import SwarmCommentList from "./swarm-comment-list/swarm-comment-list";
 import SwarmCommentInput from "../swarm-comment-input/swarm-comment-input";
 import { SwarmCommentWithErrorFlag } from "./swarm-comment-list/swarm-comment/swarm-comment";
-import { loadLatestComments, loadNextComments } from "../../utils/loadComments";
+import { loadLatestComments, loadNextComments } from "../../utils/comments";
 import { isEmpty } from "../../utils/helpers";
 import { DEFAULT_NUM_OF_COMMENTS, THREE_SECONDS } from "../../utils/constants";
 
