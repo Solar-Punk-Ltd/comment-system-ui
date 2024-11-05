@@ -1,2 +1,2 @@
 export * from "./components";
-export * from "./utils/loadComments";
+export * from "./utils/comments";

@@ -2,14 +2,14 @@ import React, { useEffect, useCallback, useState } from "react";
 import { UserComment } from "@solarpunkltd/comment-system";
 import "./swarm-comment-list.scss";
 import SwarmComment, {
-  SwarmCommentWithErrorFlag,
+  SwarmCommentWithFlags,
 } from "./swarm-comment/swarm-comment";
 
 interface SwarmCommentListProps {
-  comments: SwarmCommentWithErrorFlag[];
+  comments: SwarmCommentWithFlags[];
   loading: boolean;
   filterEnabled?: boolean;
-  resend?: (comment: SwarmCommentWithErrorFlag) => Promise<void>;
+  resend?: (comment: SwarmCommentWithFlags) => Promise<void>;
   loadHistory?: () => Promise<UserComment[]>;
 }
 
@@ -109,7 +109,14 @@ const SwarmCommentList: React.FC<SwarmCommentListProps> = ({
 
   const filteredComments = () => {
     if (filterEnabled) {
-      return comments.filter((c) => c.message.flagged !== true);
+      const actualUser = localStorage.getItem("username") || "";
+      return comments.filter((c) => {
+        if (c.username === actualUser && c.message.flagged === true) {
+          c.message.text = "***********";
+          c.ownFilterFlag = true;
+        }
+        return c.message.flagged !== true || c.ownFilterFlag;
+      });
     }
     return comments;
   };

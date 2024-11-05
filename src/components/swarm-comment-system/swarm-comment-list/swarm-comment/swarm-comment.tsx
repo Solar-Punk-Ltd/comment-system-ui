@@ -6,15 +6,17 @@ import { createMonogram } from "../../../../utils/helpers";
 import clsx from "clsx";
 import TryAgainIcon from "../../../icons/TryAgainIcon/TryAgainIcon";
 
-export interface SwarmCommentWithErrorFlag extends UserComment {
+export interface SwarmCommentWithFlags extends UserComment {
   error?: boolean;
-  resend?: (comment: SwarmCommentWithErrorFlag) => Promise<void>;
+  ownFilterFlag?: boolean;
+  resend?: (comment: SwarmCommentWithFlags) => Promise<void>;
 }
 
-const SwarmComment: React.FC<SwarmCommentWithErrorFlag> = ({
+const SwarmComment: React.FC<SwarmCommentWithFlags> = ({
   message: { text },
   username,
   error,
+  // ownFilterFlag, TODO: different styling for own filtered comments
   resend,
 }) => {
   const [errorFlag, setErrorFlag] = useState<boolean | undefined>(error);
@@ -29,7 +31,7 @@ const SwarmComment: React.FC<SwarmCommentWithErrorFlag> = ({
       text: text,
     };
 
-    const userCommentObj: SwarmCommentWithErrorFlag = {
+    const userCommentObj: SwarmCommentWithFlags = {
       message: commentObj,
       timestamp: Date.now(),
       username: username,
@@ -42,7 +44,7 @@ const SwarmComment: React.FC<SwarmCommentWithErrorFlag> = ({
       setErrorFlag(false);
     } catch (err) {
       setErrorFlag(true);
-      console.log("resend comment error: ", err);
+      console.error("Resend comment error: ", err);
     }
 
     setSending(false);
