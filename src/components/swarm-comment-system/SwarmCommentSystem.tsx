@@ -11,7 +11,7 @@ import {
 import "./swarm-comment-system.scss";
 import SwarmCommentList from "./swarm-comment-list/swarm-comment-list";
 import SwarmCommentInput from "../swarm-comment-input/swarm-comment-input";
-import { SwarmCommentWithErrorFlag } from "./swarm-comment-list/swarm-comment/swarm-comment";
+import { SwarmCommentWithFlags } from "./swarm-comment-list/swarm-comment/swarm-comment";
 import { loadLatestComments, loadNextComments } from "../../utils/comments";
 import { isEmpty } from "../../utils/helpers";
 import { DEFAULT_NUM_OF_COMMENTS, THREE_SECONDS } from "../../utils/constants";
@@ -62,7 +62,7 @@ export const SwarmCommentSystem: React.FC<SwarmCommentSystemProps> = ({
 }) => {
   const bee = new Bee(beeApiUrl);
   const topicHex: Topic = bee.makeFeedTopic(topic);
-  const [comments, setComments] = useState<SwarmCommentWithErrorFlag[]>([]);
+  const [comments, setComments] = useState<SwarmCommentWithFlags[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
 
   const nextRef = useRef<number | undefined>();
@@ -154,7 +154,7 @@ export const SwarmCommentSystem: React.FC<SwarmCommentSystemProps> = ({
   }, [loading, loadNextCommentsCb]);
 
   // if resend is succesful then find, remove and push the currently error-flagged comment to the end of the list
-  const onResend = (comment: SwarmCommentWithErrorFlag) => {
+  const onResend = (comment: SwarmCommentWithFlags) => {
     const foundIX = comments.findIndex(
       (c) =>
         c.error &&
@@ -176,7 +176,7 @@ export const SwarmCommentSystem: React.FC<SwarmCommentSystemProps> = ({
   };
 
   // only add failed comments to the list, if not already present
-  const onFailure = (comment: SwarmCommentWithErrorFlag) => {
+  const onFailure = (comment: SwarmCommentWithFlags) => {
     const foundIX = comments.findIndex(
       (c) =>
         c.error &&
@@ -193,7 +193,7 @@ export const SwarmCommentSystem: React.FC<SwarmCommentSystemProps> = ({
     }
   };
 
-  const sendComment = async (comment: SwarmCommentWithErrorFlag) => {
+  const sendComment = async (comment: SwarmCommentWithFlags) => {
     try {
       // trying to write to the next known index
       const expNextIx = nextRef.current === undefined ? 0 : nextRef.current;
