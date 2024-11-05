@@ -108,7 +108,7 @@ export const loadNextComments = async (
       return {} as CommentsWithIndex;
     }
     // if there is only one comment, return it
-    if (latestComment.nextIndex === 1) {
+    if (latestComment.nextIndex - nextIx === 1) {
       return {
         comments: [latestComment.comment],
         nextIndex: latestComment.nextIndex,

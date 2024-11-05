@@ -124,7 +124,11 @@ export const SwarmCommentSystem: React.FC<SwarmCommentSystemProps> = ({
         DEFAULT_NUM_OF_COMMENTS
       );
 
-      if (!isEmpty(newComments) && newComments.nextIndex > validNextIx) {
+      if (
+        !isEmpty(newComments) &&
+        nextRef.current !== undefined &&
+        newComments.nextIndex > nextRef.current
+      ) {
         setComments((prevComments) =>
           [...prevComments].concat(newComments.comments)
         );
