@@ -4,6 +4,7 @@ import { Comment, UserComment } from "@solarpunkltd/comment-system";
 import "./swarm-comment-input.scss";
 import SendIcon from "../icons/SendIcon/SendIcon";
 import { MAX_CHARACTER_COUNT } from "../../utils/constants";
+import Loading from "../Loading/Loading";
 
 interface SwarmCommentInputProps {
   username: string;
@@ -20,7 +21,7 @@ const SwarmCommentInput: React.FC<SwarmCommentInputProps> = ({
   const [sending, setSending] = useState<boolean>(false);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter" && !sending) {
+    if (e.key === "Enter" && !sending && commentToSend !== "") {
       sendComment();
     }
   };
@@ -47,13 +48,13 @@ const SwarmCommentInput: React.FC<SwarmCommentInputProps> = ({
     };
 
     setSending(true);
+    setCommentToSend("");
     try {
       await onSubmit(userCommentObj);
     } catch (err) {
       console.error("Submit comment error: ", err);
     }
 
-    setCommentToSend("");
     setSending(false);
   };
 
@@ -69,9 +70,17 @@ const SwarmCommentInput: React.FC<SwarmCommentInputProps> = ({
         <button
           onClick={sendComment}
           className="swarm-comment-input__send-button"
-          disabled={sending}
+          disabled={sending || commentToSend === ""}
         >
-          <SendIcon />
+          {!sending ? (
+            commentToSend !== "" ? (
+              <SendIcon />
+            ) : (
+              <SendIcon color="#A5ADBA" disabled={true} />
+            )
+          ) : (
+            <Loading />
+          )}
         </button>
       </>
     </div>
