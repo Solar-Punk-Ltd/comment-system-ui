@@ -56,8 +56,12 @@
 }
 
 .swarm-comment__message-side__text.own {
-  background-color: #ff8a5033;
+  background-color: #4a287533;
   border: 1px solid #4a287533;
+  border-bottom-left-radius: 0px;
+  border-bottom-right-radius: 8px;
+  border-top-left-radius: 8px;
+  border-top-right-radius: 8px;
 }
 
 .swarm-comment__message-side__text__error {

@@ -66,7 +66,7 @@ const SwarmComment: React.FC<SwarmCommentWithFlags> = ({
             errorFlag
               ? "#C85050"
               : username === actualUser
-              ? "#FF8A5033"
+              ? "#4A287533"
               : "#F7F8FA"
           }
         />

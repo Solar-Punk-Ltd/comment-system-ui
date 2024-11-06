@@ -1,7 +1,11 @@
-.send-icon {
+.swarm-comment-send-icon {
   display: flex;
   justify-content: center;
   align-items: center;
   width: 16px;
   height: 24px;
+}
+
+.swarm-comment-send-icon__disabled {
+  cursor: not-allowed;
 }
