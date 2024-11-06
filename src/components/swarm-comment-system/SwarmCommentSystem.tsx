@@ -137,9 +137,20 @@ export const SwarmCommentSystem: React.FC<SwarmCommentSystemProps> = ({
         nextRef.current !== undefined &&
         newComments.nextIndex > nextRef.current
       ) {
-        setComments((prevComments) =>
-          [...prevComments].concat(newComments.comments)
-        );
+        // sometimes commentcheck fails and right after the failure the comment arrives, probably due to kademlia propagation, removes duplicates
+        setComments((prevComments) => {
+          for (const nc of newComments.comments) {
+            const foundIX = prevComments.findIndex(
+              (c) =>
+                c.message.text === nc.message.text &&
+                c.message.messageId === nc.message.messageId
+            );
+            if (foundIX > -1) {
+              newComments.comments.splice(foundIX, 1);
+            }
+          }
+          return [...prevComments].concat(newComments.comments);
+        });
         nextRef.current = newComments.nextIndex;
         if (onRead) {
           onRead(newComments.comments, false, newComments.nextIndex);
@@ -174,9 +185,7 @@ export const SwarmCommentSystem: React.FC<SwarmCommentSystemProps> = ({
         c.message.messageId === comment.message.messageId
     );
     if (foundIX > -1) {
-      console.log(
-        `Resend success, removing failed comment at index: ${foundIX}`
-      );
+      console.log(`Removing failed comment at index: ${foundIX}`);
       const tmpComments = [...comments];
       tmpComments.splice(foundIX, 1);
       tmpComments.push({
