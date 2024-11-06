@@ -125,7 +125,7 @@ const SwarmCommentList: React.FC<SwarmCommentListProps> = ({
     <div ref={handleDivCb} className="swarm-comment-system-comment-list">
       {filteredComments().map((c, ix) => (
         <SwarmComment
-          key={ix}
+          key={c.message.messageId || ix}
           message={{ text: c.message.text }}
           username={c.username}
           timestamp={c.timestamp}

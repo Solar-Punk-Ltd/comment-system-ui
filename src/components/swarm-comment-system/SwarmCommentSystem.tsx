@@ -66,6 +66,7 @@ export const SwarmCommentSystem: React.FC<SwarmCommentSystemProps> = ({
   const [loading, setLoading] = useState<boolean>(true);
 
   const nextRef = useRef<number | undefined>();
+  const sendingRef = useRef<boolean | undefined>();
   const commentsToRead = numOfComments || DEFAULT_NUM_OF_COMMENTS;
 
   useEffect(() => {
@@ -96,6 +97,7 @@ export const SwarmCommentSystem: React.FC<SwarmCommentSystemProps> = ({
         console.error("Loading comments error: ", err);
       }
       setLoading(false);
+      sendingRef.current = false;
     };
 
     if (preloadedCommnets) {
@@ -106,6 +108,7 @@ export const SwarmCommentSystem: React.FC<SwarmCommentSystemProps> = ({
       setComments(preloadedCommnets.comments);
       nextRef.current = preloadedCommnets.nextIndex;
       setLoading(false);
+      sendingRef.current = false;
     } else {
       init();
     }
@@ -113,6 +116,10 @@ export const SwarmCommentSystem: React.FC<SwarmCommentSystemProps> = ({
 
   // Fetching comments periodically to see if we have the latest ones
   const loadNextCommentsCb = useCallback(async () => {
+    if (sendingRef.current === true) {
+      return;
+    }
+
     try {
       const validNextIx = nextRef.current === undefined ? 0 : nextRef.current;
       const newComments = await loadNextComments(
@@ -125,13 +132,25 @@ export const SwarmCommentSystem: React.FC<SwarmCommentSystemProps> = ({
       );
 
       if (
+        !sendingRef.current &&
         !isEmpty(newComments) &&
         nextRef.current !== undefined &&
         newComments.nextIndex > nextRef.current
       ) {
-        setComments((prevComments) =>
-          [...prevComments].concat(newComments.comments)
-        );
+        // sometimes commentcheck fails and right after the failure the comment arrives, probably due to kademlia propagation, removes duplicates
+        setComments((prevComments) => {
+          for (const nc of newComments.comments) {
+            const foundIX = prevComments.findIndex(
+              (c) =>
+                c.message.text === nc.message.text &&
+                c.message.messageId === nc.message.messageId
+            );
+            if (foundIX > -1) {
+              newComments.comments.splice(foundIX, 1);
+            }
+          }
+          return [...prevComments].concat(newComments.comments);
+        });
         nextRef.current = newComments.nextIndex;
         if (onRead) {
           onRead(newComments.comments, false, newComments.nextIndex);
@@ -166,9 +185,7 @@ export const SwarmCommentSystem: React.FC<SwarmCommentSystemProps> = ({
         c.message.messageId === comment.message.messageId
     );
     if (foundIX > -1) {
-      console.log(
-        `Resend success, removing failed comment at index: ${foundIX}`
-      );
+      console.log(`Removing failed comment at index: ${foundIX}`);
       const tmpComments = [...comments];
       tmpComments.splice(foundIX, 1);
       tmpComments.push({
@@ -211,6 +228,7 @@ export const SwarmCommentSystem: React.FC<SwarmCommentSystemProps> = ({
         timestamp: comment.timestamp,
         username: comment.username,
       };
+      sendingRef.current = true;
       const newComment = await writeCommentToIndex(plainCommentReq, {
         stamp,
         identifier: topicHex,
@@ -254,11 +272,13 @@ export const SwarmCommentSystem: React.FC<SwarmCommentSystemProps> = ({
         setComments((prevComments) => [...prevComments, comment]);
       }
       nextRef.current = expNextIx + 1;
+      sendingRef.current = false;
       if (onComment) {
         onComment(newComment, expNextIx + 1);
       }
     } catch (err) {
       onFailure(comment);
+      sendingRef.current = false;
       throw err;
     }
   };
