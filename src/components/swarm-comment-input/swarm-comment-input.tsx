@@ -55,7 +55,6 @@ const SwarmCommentInput: React.FC<SwarmCommentInputProps> = ({
       console.error("Submit comment error: ", err);
     }
 
-    // setCommentToSend("");
     setSending(false);
   };
 
