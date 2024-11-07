@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Comment, UserComment } from "@solarpunkltd/comment-system";
 import "./swarm-comment.scss";
 import AvatarMonogram from "../../../icons/AvatarMonogram/AvatarMonogram";
-import { createMonogram } from "../../../../utils/helpers";
+import { createMonogram, formatTime } from "../../../../utils/helpers";
 import clsx from "clsx";
 import TryAgainIcon from "../../../icons/TryAgainIcon/TryAgainIcon";
 
@@ -16,6 +16,7 @@ const SwarmComment: React.FC<SwarmCommentWithFlags> = ({
   message: { text },
   username,
   error,
+  timestamp,
   // ownFilterFlag, TODO: different styling for own filtered comments
   resend,
 }) => {
@@ -79,8 +80,11 @@ const SwarmComment: React.FC<SwarmCommentWithFlags> = ({
             error: errorFlag,
           })}
         >
-          <div className="swarm-comment__message-side__name__username">
-            {username}
+          <div className="swarm-comment__message-side__name__username-and-time">
+            {username} &nbsp;
+            <div className="swarm-comment__right-side__name-and-time__time">
+              {formatTime(timestamp)}
+            </div>
           </div>
         </div>
 
