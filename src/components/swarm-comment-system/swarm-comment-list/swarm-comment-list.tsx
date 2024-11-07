@@ -112,7 +112,7 @@ const SwarmCommentList: React.FC<SwarmCommentListProps> = ({
       const actualUser = localStorage.getItem("username") || "";
       return comments.filter((c) => {
         if (c.username === actualUser && c.message.flagged === true) {
-          c.message.text = "***********";
+          c.message.text = "Potentially infringing content hidden by USCVS!";
           c.ownFilterFlag = true;
         }
         return c.message.flagged !== true || c.ownFilterFlag;
