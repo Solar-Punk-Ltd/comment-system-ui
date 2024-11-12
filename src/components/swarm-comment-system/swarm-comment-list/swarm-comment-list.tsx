@@ -99,7 +99,6 @@ const SwarmCommentList: React.FC<SwarmCommentListProps> = ({
           <p>Loading comments...</p>
         ) : (
           <>
-            <p>There are no comments yet.</p>
             <p>Start the conversation!</p>
           </>
         )}
