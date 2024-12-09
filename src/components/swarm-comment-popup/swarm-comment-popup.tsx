@@ -1,6 +1,8 @@
 import React from "react";
-import "./swarm-comment-popup.scss";
+
 import SwarmCommentButton from "./swarm-comment-button/swarm-comment-button";
+
+import "./swarm-comment-popup.scss";
 
 interface SwarmCommentPopupProps {
   question: string;

@@ -1,5 +1,5 @@
 export const createMonogram = (name: string) => {
-  const initials = name.split(" ").map((n) => n[0]);
+  const initials = name.split(" ").map(n => n[0]);
   return initials.join("").toUpperCase();
 };
 
@@ -17,8 +17,7 @@ export function formatTime(timestamp?: number) {
       hour12: false,
     });
 
-  const formatDate = (date: Date) =>
-    date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  const formatDate = (date: Date) => date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
 
   if (isSameDay(date, now)) {
     return formatHM(date);
