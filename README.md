@@ -5,7 +5,7 @@ This is an embeddable widget that can be added to any HTML page. It renders a de
 ## Swarm network
 
 Swarm is a peer-to-peer network of Bee nodes that collectively provide censorship resistant decentralised storage and communication services.
-
+<!-- TODO: fix and extend readme -->
 ## Example Usage
 
 ```

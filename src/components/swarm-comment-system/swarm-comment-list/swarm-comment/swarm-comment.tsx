@@ -14,14 +14,7 @@ export interface SwarmCommentWithFlags extends UserComment {
   resend?: (comment: SwarmCommentWithFlags) => Promise<void>;
 }
 
-const SwarmComment: React.FC<SwarmCommentWithFlags> = ({
-  message: { text },
-  username,
-  error,
-  timestamp,
-  // ownFilterFlag, TODO: different styling for own filtered comments
-  resend,
-}) => {
+const SwarmComment: React.FC<SwarmCommentWithFlags> = ({ message: { text }, username, error, timestamp, resend }) => {
   const [errorFlag, setErrorFlag] = useState<boolean | undefined>(error);
   const [sending, setSending] = useState<boolean>(false);
   const actualUser = localStorage.getItem("username");
