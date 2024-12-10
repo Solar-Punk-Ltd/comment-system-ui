@@ -11,16 +11,16 @@ export interface SwarmCommentFormProps {
 }
 
 interface FormElements extends HTMLFormControlsCollection {
-  user: HTMLInputElement;
-  data: HTMLInputElement;
+  username: HTMLInputElement;
+  text: HTMLInputElement;
 }
 interface CommentFormElement extends HTMLFormElement {
   readonly elements: FormElements;
 }
 
 interface FormErrors {
-  user?: string;
-  data?: string;
+  username?: string;
+  text?: string;
 }
 // TODO: resend in case of error
 export default function SwarmCommentForm({ loading, onSubmit, maxCharacterCount, className }: SwarmCommentFormProps) {
@@ -44,35 +44,36 @@ export default function SwarmCommentForm({ loading, onSubmit, maxCharacterCount,
   const submit = (event: React.FormEvent<CommentFormElement>) => {
     event.preventDefault();
     const elements = event.currentTarget.elements;
-    const user = elements.user.value;
-    const data = elements.data.value;
+    const username = elements.username.value;
+    const text = elements.text.value;
     const errors: FormErrors = {
-      user: validate(user),
-      data: validate(data),
+      username: validate(username),
+      text: validate(text),
     };
 
     if (hasErrors(errors)) {
-      return setErrors(errors);
+      setErrors(errors);
+      return;
     }
 
-    onSubmit({ username: user, message: { text: data }, timestamp: Date.now() });
+    onSubmit({ username: username, message: { text: text }, timestamp: Date.now() });
   };
 
   return (
     <form className={`${styles["swarm-comment-form"]} ${className}`} onSubmit={submit}>
       <h6>Add comment:</h6>
       <input
-        className={errors.user && styles["field-error"]}
-        onChange={() => setErrors({ ...errors, user: undefined })}
+        className={errors.username && styles["field-error"]}
+        onChange={() => setErrors({ ...errors, username: undefined })}
         type="text"
-        name="user"
+        name="username"
         placeholder="Your name"
         disabled={loading}
       />
       <textarea
-        className={errors.data && styles["field-error"]}
-        onChange={() => setErrors({ ...errors, data: undefined })}
-        name="data"
+        className={errors.text && styles["field-error"]}
+        onChange={() => setErrors({ ...errors, text: undefined })}
+        name="text"
         rows={5}
         disabled={loading}
       ></textarea>

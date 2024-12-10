@@ -187,7 +187,7 @@ export function SwarmCommentSystem(props: SwarmCommentSystemProps) {
     };
 
     loadComments();
-  }, [category]);
+  }, [approvedFeedAddress, beeApiUrl, identifier, numOfComments, category]);
 
   if (!comments) {
     return <div>Couldn't load comments</div>;
@@ -208,7 +208,7 @@ export function SwarmCommentSystem(props: SwarmCommentSystemProps) {
         tabs={approvedFeedAddress ? ["Author Selected", "All"] : ["All"]}
         onTabChange={tab => setCategory(tab === 0 ? "approved" : "all")}
       >
-        <SwarmCommentList className={classes?.comments} comments={comments} />
+        <SwarmCommentList className={classes?.comments} comments={comments} resend={sendComment} />
       </Tabs>
     </div>
   );
