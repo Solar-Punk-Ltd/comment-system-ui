@@ -1,27 +1,16 @@
-import { Bee, Signer, Topic } from "@ethersphere/bee-js";
-import {
-  SingleComment,
-  CommentsWithIndex,
-  readCommentsAsync,
-  readSingleComment,
-} from "@solarpunkltd/comment-system";
+import { Bee, Topic } from "@ethersphere/bee-js";
+import { CommentsWithIndex, readCommentsInRange, readSingleComment, SingleComment } from "@solarpunkltd/comment-system";
+
 import { isEmpty } from "./helpers";
 
-export const readLatestComment = async (
-  stamp: string,
-  topic: string,
-  signer: Signer,
-  beeApiUrl: string
-): Promise<SingleComment> => {
+export const readLatestComment = async (topic: string, address: string, beeApiUrl: string): Promise<SingleComment> => {
   try {
     const bee = new Bee(beeApiUrl);
     const topicHex: Topic = bee.makeFeedTopic(topic);
-    return await readSingleComment({
-      stamp: stamp,
+    return await readSingleComment(undefined, {
       identifier: topicHex,
-      signer: signer,
       beeApiUrl: beeApiUrl,
-      approvedFeedAddress: signer.address as unknown as string,
+      approvedFeedAddress: address,
     });
   } catch (err) {
     console.error(`Loading the latest comment of topic ${topic} error: ${err}`);
@@ -30,24 +19,14 @@ export const readLatestComment = async (
 };
 
 export const loadLatestComments = async (
-  stamp: string,
   topic: string,
-  signer: Signer,
+  address: string,
   beeApiUrl: string,
-  numOfComments: number
+  numOfComments: number,
 ): Promise<CommentsWithIndex> => {
   try {
-    const latestComment = await readLatestComment(
-      stamp,
-      topic,
-      signer,
-      beeApiUrl
-    );
-    if (
-      isEmpty(latestComment) ||
-      latestComment.nextIndex === undefined ||
-      latestComment.nextIndex === 0
-    ) {
+    const latestComment = await readLatestComment(topic, address, beeApiUrl);
+    if (isEmpty(latestComment) || latestComment.nextIndex === undefined || latestComment.nextIndex === 0) {
       return {} as CommentsWithIndex;
     }
     // if there is only one comment, return it
@@ -63,42 +42,30 @@ export const loadLatestComments = async (
     // the latest comment is already fetched
     const endIx = latestComment.nextIndex - 2;
     const startIx = endIx > numOfComments ? endIx - numOfComments + 1 : 0;
-    const comments = await readCommentsAsync({
-      stamp: stamp,
+    const comments = await readCommentsInRange(startIx, endIx, {
       identifier: topicHex,
-      signer: signer,
       beeApiUrl: beeApiUrl,
-      approvedFeedAddress: signer.address as unknown as string,
-      startIx: startIx,
-      endIx: endIx,
+      approvedFeedAddress: address,
     });
     return {
       comments: [...comments, latestComment.comment],
       nextIndex: latestComment.nextIndex,
     } as CommentsWithIndex;
   } catch (err) {
-    console.error(
-      `Loading the last ${numOfComments} comments of topic ${topic} error: ${err}`
-    );
+    console.error(`Loading the last ${numOfComments} comments of topic ${topic} error: ${err}`);
     return {} as CommentsWithIndex;
   }
 };
 
 export const loadNextComments = async (
-  stamp: string,
   topic: string,
-  signer: Signer,
+  address: string,
   beeApiUrl: string,
   nextIx: number,
-  numOfComments: number
+  numOfComments: number,
 ): Promise<CommentsWithIndex> => {
   try {
-    const latestComment = await readLatestComment(
-      stamp,
-      topic,
-      signer,
-      beeApiUrl
-    );
+    const latestComment = await readLatestComment(topic, address, beeApiUrl);
     if (
       isEmpty(latestComment) ||
       latestComment.nextIndex === undefined ||
@@ -124,14 +91,10 @@ export const loadNextComments = async (
       endIx = latestComment.nextIndex - 2;
     }
 
-    const comments = await readCommentsAsync({
-      stamp: stamp,
+    const comments = await readCommentsInRange(startIx, endIx, {
       identifier: topicHex,
-      signer: signer,
       beeApiUrl: beeApiUrl,
-      approvedFeedAddress: signer.address as unknown as string,
-      startIx: startIx,
-      endIx: endIx,
+      approvedFeedAddress: address,
     });
     // the latest comment is already fetched
     return {

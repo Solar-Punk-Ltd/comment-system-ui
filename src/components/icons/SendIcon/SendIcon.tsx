@@ -1,6 +1,7 @@
 import React from "react";
-import "./SendIcon.scss";
 import clsx from "clsx";
+
+import "./SendIcon.scss";
 
 interface SendIconProps {
   color?: string;
@@ -8,11 +9,7 @@ interface SendIconProps {
   disabled?: boolean;
 }
 
-const SendIcon: React.FC<SendIconProps> = ({
-  color,
-  backgroundColor,
-  disabled,
-}) => {
+const SendIcon: React.FC<SendIconProps> = ({ color, backgroundColor, disabled }) => {
   return (
     <div
       className={clsx("swarm-comment-send-icon", {

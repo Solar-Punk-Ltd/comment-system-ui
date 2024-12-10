@@ -1,6 +1,7 @@
 import React from "react";
-import "./swarm-comment-button.scss";
 import clsx from "clsx";
+
+import "./swarm-comment-button.scss";
 
 interface SwarmCommentButtonProps {
   children: string;
@@ -8,11 +9,7 @@ interface SwarmCommentButtonProps {
   onClick?: () => void;
 }
 
-const SwarmCommentButton: React.FC<SwarmCommentButtonProps> = ({
-  children,
-  version,
-  onClick,
-}) => {
+const SwarmCommentButton: React.FC<SwarmCommentButtonProps> = ({ children, version, onClick }) => {
   return (
     <button
       disabled={version === "inactive"}

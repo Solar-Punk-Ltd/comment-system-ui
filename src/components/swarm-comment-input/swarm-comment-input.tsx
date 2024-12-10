@@ -1,10 +1,12 @@
 // import React, { useState, useRef, ChangeEvent, useEffect } from "react";
-import React, { useState, ChangeEvent } from "react";
+import React, { ChangeEvent, useState } from "react";
 import { Comment, UserComment } from "@solarpunkltd/comment-system";
-import "./swarm-comment-input.scss";
-import SendIcon from "../icons/SendIcon/SendIcon";
+
 import { MAX_CHARACTER_COUNT } from "../../utils/constants";
+import SendIcon from "../icons/SendIcon/SendIcon";
 import Loading from "../Loading/Loading";
+
+import "./swarm-comment-input.scss";
 
 interface SwarmCommentInputProps {
   username: string;
@@ -12,11 +14,7 @@ interface SwarmCommentInputProps {
   onSubmit: (comment: UserComment) => Promise<void>;
 }
 
-const SwarmCommentInput: React.FC<SwarmCommentInputProps> = ({
-  username,
-  maxCharacterCount,
-  onSubmit,
-}) => {
+const SwarmCommentInput: React.FC<SwarmCommentInputProps> = ({ username, maxCharacterCount, onSubmit }) => {
   const [commentToSend, setCommentToSend] = useState<string>("");
   const [sending, setSending] = useState<boolean>(false);
 
@@ -63,7 +61,7 @@ const SwarmCommentInput: React.FC<SwarmCommentInputProps> = ({
       <>
         <input
           value={commentToSend}
-          onChange={(e) => handleOnChange(e)}
+          onChange={e => handleOnChange(e)}
           onKeyDown={handleKeyDown}
           className="swarm-comment-input__input"
         />
@@ -72,15 +70,7 @@ const SwarmCommentInput: React.FC<SwarmCommentInputProps> = ({
           className="swarm-comment-input__send-button"
           disabled={sending || commentToSend === ""}
         >
-          {!sending ? (
-            commentToSend !== "" ? (
-              <SendIcon />
-            ) : (
-              <SendIcon color="#A5ADBA" disabled={true} />
-            )
-          ) : (
-            <Loading />
-          )}
+          {!sending ? commentToSend !== "" ? <SendIcon /> : <SendIcon color="#A5ADBA" disabled={true} /> : <Loading />}
         </button>
       </>
     </div>

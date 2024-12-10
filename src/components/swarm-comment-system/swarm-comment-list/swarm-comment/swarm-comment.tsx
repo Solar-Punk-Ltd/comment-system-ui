@@ -1,10 +1,12 @@
 import React, { useState } from "react";
 import { Comment, UserComment } from "@solarpunkltd/comment-system";
-import "./swarm-comment.scss";
-import AvatarMonogram from "../../../icons/AvatarMonogram/AvatarMonogram";
-import { createMonogram, formatTime } from "../../../../utils/helpers";
 import clsx from "clsx";
+
+import { createMonogram, formatTime } from "../../../../utils/helpers";
+import AvatarMonogram from "../../../icons/AvatarMonogram/AvatarMonogram";
 import TryAgainIcon from "../../../icons/TryAgainIcon/TryAgainIcon";
+
+import "./swarm-comment.scss";
 
 export interface SwarmCommentWithFlags extends UserComment {
   error?: boolean;
@@ -12,14 +14,7 @@ export interface SwarmCommentWithFlags extends UserComment {
   resend?: (comment: SwarmCommentWithFlags) => Promise<void>;
 }
 
-const SwarmComment: React.FC<SwarmCommentWithFlags> = ({
-  message: { text },
-  username,
-  error,
-  timestamp,
-  // ownFilterFlag, TODO: different styling for own filtered comments
-  resend,
-}) => {
+const SwarmComment: React.FC<SwarmCommentWithFlags> = ({ message: { text }, username, error, timestamp, resend }) => {
   const [errorFlag, setErrorFlag] = useState<boolean | undefined>(error);
   const [sending, setSending] = useState<boolean>(false);
   const actualUser = localStorage.getItem("username");
@@ -56,20 +51,8 @@ const SwarmComment: React.FC<SwarmCommentWithFlags> = ({
       <div className="swarm-comment__avatar-side">
         <AvatarMonogram
           letters={createMonogram(username)}
-          color={
-            errorFlag
-              ? "white"
-              : username === actualUser
-              ? "#333333"
-              : "#4A2875"
-          }
-          backgroundColor={
-            errorFlag
-              ? "#C85050"
-              : username === actualUser
-              ? "#4A287533"
-              : "#F7F8FA"
-          }
+          color={errorFlag ? "white" : username === actualUser ? "#333333" : "#4A2875"}
+          backgroundColor={errorFlag ? "#C85050" : username === actualUser ? "#4A287533" : "#F7F8FA"}
         />
       </div>
 
@@ -82,19 +65,15 @@ const SwarmComment: React.FC<SwarmCommentWithFlags> = ({
         >
           <div className="swarm-comment__message-side__name__username-and-time">
             {username} &nbsp;
-            <div className="swarm-comment__right-side__name-and-time__time">
-              {formatTime(timestamp)}
-            </div>
+            <div className="swarm-comment__right-side__name-and-time__time">{formatTime(timestamp)}</div>
           </div>
         </div>
 
         <div
           className={clsx({
             "swarm-comment__message-side__text__error": errorFlag,
-            "swarm-comment__message-side__text":
-              !errorFlag && username !== actualUser,
-            "swarm-comment__message-side__text own":
-              !errorFlag && username === actualUser,
+            "swarm-comment__message-side__text": !errorFlag && username !== actualUser,
+            "swarm-comment__message-side__text own": !errorFlag && username === actualUser,
           })}
         >
           {text}
@@ -107,10 +86,7 @@ const SwarmComment: React.FC<SwarmCommentWithFlags> = ({
               })}
             >
               We can't send your comment -{" "}
-              <div
-                onClick={resendComment}
-                className="swarm-comment__message-side__try-again__text-with-icon"
-              >
+              <div onClick={resendComment} className="swarm-comment__message-side__try-again__text-with-icon">
                 Try again <TryAgainIcon />
               </div>
             </div>

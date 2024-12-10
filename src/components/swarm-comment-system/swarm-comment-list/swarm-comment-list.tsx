@@ -1,9 +1,9 @@
-import React, { useEffect, useCallback, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { UserComment } from "@solarpunkltd/comment-system";
+
+import SwarmComment, { SwarmCommentWithFlags } from "./swarm-comment/swarm-comment";
+
 import "./swarm-comment-list.scss";
-import SwarmComment, {
-  SwarmCommentWithFlags,
-} from "./swarm-comment/swarm-comment";
 
 interface SwarmCommentListProps {
   comments: SwarmCommentWithFlags[];
@@ -32,7 +32,6 @@ const SwarmCommentList: React.FC<SwarmCommentListProps> = ({
   }, []);
 
   useEffect(() => {
-    // TODO: loading icon
     const handleScroll = () => {
       if (element) {
         const { scrollTop, scrollHeight, clientHeight } = element;
@@ -109,7 +108,7 @@ const SwarmCommentList: React.FC<SwarmCommentListProps> = ({
   const filteredComments = () => {
     if (filterEnabled) {
       const actualUser = localStorage.getItem("username") || "";
-      return comments.filter((c) => {
+      return comments.filter(c => {
         if (c.username === actualUser && c.message.flagged === true) {
           c.message.text = "Potentially infringing content hidden by USCVS!";
           c.ownFilterFlag = true;

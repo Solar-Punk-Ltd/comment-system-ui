@@ -1,4 +1,5 @@
 import React from "react";
+
 import "./AvatarMonogram.scss";
 
 interface AvatarMonogramProps {
@@ -7,11 +8,7 @@ interface AvatarMonogramProps {
   backgroundColor?: string;
 }
 
-const AvatarMonogram: React.FC<AvatarMonogramProps> = ({
-  letters,
-  color,
-  backgroundColor,
-}) => {
+const AvatarMonogram: React.FC<AvatarMonogramProps> = ({ letters, color, backgroundColor }) => {
   return (
     <div className="avatar-monogram" style={{ color, backgroundColor }}>
       {letters}
