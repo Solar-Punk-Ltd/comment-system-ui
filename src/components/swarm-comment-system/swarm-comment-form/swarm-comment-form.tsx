@@ -1,10 +1,12 @@
-import { CommentRequest } from "@ethersphere/comment-system";
-import styles from "./swarm-comment-form.module.scss";
 import { useState } from "react";
+import { UserComment } from "@solarpunkltd/comment-system";
+
+import styles from "./swarm-comment-form.module.scss";
 
 export interface SwarmCommentFormProps {
   loading: boolean;
-  onSubmit: (comment: CommentRequest) => void;
+  onSubmit: (comment: UserComment) => void;
+  maxCharacterCount?: number;
   className?: string;
 }
 
@@ -20,21 +22,23 @@ interface FormErrors {
   user?: string;
   data?: string;
 }
-
-export default function SwarmCommentForm({
-  loading,
-  onSubmit,
-  className,
-}: SwarmCommentFormProps) {
+// TODO: resend in case of error
+export default function SwarmCommentForm({ loading, onSubmit, maxCharacterCount, className }: SwarmCommentFormProps) {
   const [errors, setErrors] = useState<FormErrors>({});
 
   const validate = (value: string): string | undefined => {
     if (!value) {
       return "This field is required.";
     }
+
+    if (maxCharacterCount && value.length > maxCharacterCount) {
+      return `The maximum number of characters is ${maxCharacterCount}.`;
+    }
+
+    return undefined;
   };
   const hasErrors = (errors: FormErrors): boolean => {
-    return Object.values(errors).some((value) => Boolean(value));
+    return Object.values(errors).some(value => Boolean(value));
   };
 
   const submit = (event: React.FormEvent<CommentFormElement>) => {
@@ -51,14 +55,11 @@ export default function SwarmCommentForm({
       return setErrors(errors);
     }
 
-    onSubmit({ user, data });
+    onSubmit({ username: user, message: { text: data }, timestamp: Date.now() });
   };
 
   return (
-    <form
-      className={`${styles["swarm-comment-form"]} ${className}`}
-      onSubmit={submit}
-    >
+    <form className={`${styles["swarm-comment-form"]} ${className}`} onSubmit={submit}>
       <h6>Add comment:</h6>
       <input
         className={errors.user && styles["field-error"]}

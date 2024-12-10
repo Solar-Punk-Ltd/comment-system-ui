@@ -9,14 +9,7 @@ interface TabsProps {
   className?: string;
 }
 
-export function Tabs({
-  tabs,
-  activeTab,
-  children,
-  onTabChange,
-  disabled,
-  className,
-}: TabsProps) {
+export function Tabs({ tabs, activeTab, children, onTabChange, disabled, className }: TabsProps) {
   return (
     <>
       <div className={`${styles["swarm-comment-tabs"]} ${className}`}>

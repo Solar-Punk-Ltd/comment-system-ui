@@ -1,23 +1,26 @@
-import { Comment } from "@ethersphere/comment-system";
+import { UserComment } from "@solarpunkltd/comment-system";
+
 import styles from "./swarm-comment-list.module.scss";
 
-export interface SwarmCommentSystemProps {
-  comments: Comment[];
+export interface SwarmCommentListProps {
+  comments: SwarmCommentWithFlags[];
   className?: string;
 }
 
-export default function SwarmCommentList({
-  comments,
-  className,
-}: SwarmCommentSystemProps) {
+export interface SwarmCommentWithFlags extends UserComment {
+  error?: boolean;
+  resend?: (comment: SwarmCommentWithFlags) => Promise<void>;
+}
+
+export default function SwarmCommentList({ comments, className }: SwarmCommentListProps) {
   return (
     <div className={`${styles.swarmCommentList} ${className}`}>
-      {comments.map(({ user, data, timestamp }, index) => (
+      {comments.map(({ username, message, timestamp }, index) => (
         <div key={index}>
           <p>
-            <strong>{user}</strong> on {new Date(timestamp).toDateString()}
+            <strong>{username}</strong> on {new Date(timestamp).toDateString()}
           </p>
-          <p>{data}</p>
+          <p>{message.text}</p>
         </div>
       ))}
     </div>
