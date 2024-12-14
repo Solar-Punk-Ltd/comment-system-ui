@@ -8,13 +8,29 @@ Swarm is a peer-to-peer network of Bee nodes that collectively provide censorshi
 
 ## Example Usage
 
-```
+```javascript
 <div id="comments"></div>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swarm-comment-system-ui@1.1.0/dist/style.css">
 <script src="https://cdn.jsdelivr.net/npm/swarm-comment-system-ui@1.1.0"></script>
 <script>
     window.SwarmCommentSystem.renderSwarmComments('comments')
 </script>
+```
+
+## Integrating it into a react application
+
+```javascript
+return (
+  <React.StrictMode>
+    <App
+      beeApiUrl="<your-node-address>"
+      stamp={"<your-stamp>"}
+      privatekey={"<your-author-privetakey>"}
+      approvedFeedAddress={"<your-approved-address>"}
+      identifier={"<your-deisred-topic>"}
+    />
+  </React.StrictMode>,
+);
 ```
 
 ## Recommended Usage

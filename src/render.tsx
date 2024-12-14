@@ -1,12 +1,12 @@
-import React from 'react'
-import ReactDOM from 'react-dom/client'
-import { SwarmCommentSystem, SwarmCommentSystemProps } from './components'
+import React from "react";
+import ReactDOM from "react-dom/client";
+
+import { SwarmCommentSystem, SwarmCommentSystemProps } from "./components";
 
 export function renderSwarmComments(id: string, props: SwarmCommentSystemProps) {
   ReactDOM.createRoot(document.getElementById(id)!).render(
     <React.StrictMode>
-        <SwarmCommentSystem {...props} />
-    </React.StrictMode>
-  )
+      <SwarmCommentSystem {...props} />
+    </React.StrictMode>,
+  );
 }
-
