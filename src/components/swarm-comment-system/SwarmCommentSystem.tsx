@@ -10,7 +10,7 @@ import {
 } from "@solarpunkltd/comment-system";
 
 import { loadLatestComments, loadNextComments } from "../../utils/comments";
-import { DEFAULT_NUM_OF_COMMENTS, REFERENCE_HEX_LENGTH, THREE_SECONDS } from "../../utils/constants";
+import { DEFAULT_NUM_OF_COMMENTS, ETH_ADDRESS_LENGTH, THREE_SECONDS } from "../../utils/constants";
 import { isEmpty } from "../../utils/helpers";
 import SwarmCommentInput from "../swarm-comment-input/swarm-comment-input";
 
@@ -92,7 +92,7 @@ export const SwarmCommentSystem: React.FC<SwarmCommentSystemProps> = ({
   const [comments, setComments] = useState<SwarmCommentWithFlags[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
 
-  const approvedFeedAddress = Utils.makeHexString(signer.address, REFERENCE_HEX_LENGTH);
+  const approvedFeedAddress = Utils.makeHexString(signer.address, ETH_ADDRESS_LENGTH);
   const nextRef = useRef<number | undefined>();
   const sendingRef = useRef<boolean | undefined>();
   const commentsToRead = numOfComments || DEFAULT_NUM_OF_COMMENTS;
