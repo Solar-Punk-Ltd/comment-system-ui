@@ -5,7 +5,7 @@ import styles from "./swarm-comment-form.module.scss";
 
 export interface SwarmCommentFormProps {
   loading: boolean;
-  onSubmit: (comment: UserComment) => void;
+  onSubmit: (comment: UserComment) => Promise<void>;
   maxCharacterCount?: number;
   className?: string;
 }
@@ -41,7 +41,7 @@ export default function SwarmCommentForm({ loading, onSubmit, maxCharacterCount,
     return Object.values(errors).some(value => Boolean(value));
   };
 
-  const submit = (event: React.FormEvent<CommentFormElement>) => {
+  const submit = async (event: React.FormEvent<CommentFormElement>) => {
     event.preventDefault();
     const elements = event.currentTarget.elements;
     const username = elements.username.value;
@@ -56,7 +56,11 @@ export default function SwarmCommentForm({ loading, onSubmit, maxCharacterCount,
       return;
     }
 
-    onSubmit({ username: username, message: { text: text }, timestamp: Date.now() });
+    try {
+      await onSubmit({ username: username, message: { text: text }, timestamp: Date.now() });
+    } catch (error) {
+      console.error("Error submitting comment: ", error);
+    }
   };
 
   return (

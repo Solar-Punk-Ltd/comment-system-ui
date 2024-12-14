@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
-import { Comment, readSingleComment, UserComment, writeCommentToIndex } from "@solarpunkltd/comment-system";
+import { readSingleComment, UserComment, writeCommentToIndex } from "@solarpunkltd/comment-system";
 
 import { loadLatestComments } from "../../utils/comments";
+import { CATEGORIES } from "../../utils/constants";
 import { isEmpty } from "../../utils/helpers";
 import { Tabs } from "../tabs/tabs";
 
@@ -55,7 +56,7 @@ export function SwarmCommentSystem(props: SwarmCommentSystemProps) {
   const { stamp, privatekey, approvedFeedAddress, classes, beeApiUrl, identifier, numOfComments, maxCharacterCount } =
     props;
   const [comments, setComments] = useState<SwarmCommentWithFlags[] | null>(null);
-  const [category, setCategory] = useState<"all" | "approved">("all");
+  const [category, setCategory] = useState<CATEGORIES>(CATEGORIES.APPROVED);
   const [loading, setLoading] = useState(true);
   const [formLoading, setFormLoading] = useState(false);
 
@@ -104,20 +105,14 @@ export function SwarmCommentSystem(props: SwarmCommentSystemProps) {
       setFormLoading(true);
 
       // trying to write to the next known index
-      const expNextIx = (
-        await readSingleComment(undefined, {
-          identifier: identifier,
-          beeApiUrl: beeApiUrl,
-          approvedFeedAddress: approvedFeedAddress,
-        })
-      ).nextIndex;
-      const commentObj: Comment = {
-        text: comment.message.text,
-        messageId: comment.message.messageId,
-        threadId: comment.message.threadId,
-      };
+      const lastComment = await readSingleComment(undefined, {
+        identifier: identifier,
+        beeApiUrl: beeApiUrl,
+        approvedFeedAddress: approvedFeedAddress,
+      });
+      const expNextIx = lastComment.nextIndex || 0;
       const plainCommentReq: UserComment = {
-        message: commentObj,
+        message: { ...comment.message },
         timestamp: comment.timestamp,
         username: comment.username,
       };
@@ -148,8 +143,6 @@ export function SwarmCommentSystem(props: SwarmCommentSystemProps) {
                 Expected timestamp: ${comment.timestamp}, got: ${commentCheck.comment.timestamp}`;
       }
       console.log(`Writing a new comment to index ${expNextIx} was successful: `, newComment);
-      // use filter flag set by AI, only available if reading back was successful
-      comment.message.flagged = commentCheck.comment.message.flagged;
 
       if (comment.error === true) {
         onResend(comment);
@@ -171,7 +164,7 @@ export function SwarmCommentSystem(props: SwarmCommentSystemProps) {
       try {
         const newComments = await loadLatestComments(
           identifier,
-          category === "approved" ? approvedFeedAddress : undefined,
+          category === CATEGORIES.APPROVED ? approvedFeedAddress : undefined,
           beeApiUrl,
           numOfComments,
         );
@@ -189,7 +182,7 @@ export function SwarmCommentSystem(props: SwarmCommentSystemProps) {
     loadComments();
   }, [approvedFeedAddress, beeApiUrl, identifier, numOfComments, category]);
 
-  if (!comments) {
+  if (!loading && !comments) {
     return <div>Couldn't load comments</div>;
   }
 
@@ -202,13 +195,18 @@ export function SwarmCommentSystem(props: SwarmCommentSystemProps) {
         maxCharacterCount={maxCharacterCount}
       />
       <Tabs
-        activeTab={category === "approved" ? 0 : 1}
+        activeTab={category === CATEGORIES.APPROVED ? 0 : 1}
         className={classes?.tabs}
-        disabled={[loading, loading]}
+        disabled={[loading, formLoading]}
         tabs={approvedFeedAddress ? ["Author Selected", "All"] : ["All"]}
-        onTabChange={tab => setCategory(tab === 0 ? "approved" : "all")}
+        onTabChange={tab => setCategory(tab === 0 ? CATEGORIES.APPROVED : CATEGORIES.ALL)}
       >
-        <SwarmCommentList className={classes?.comments} comments={comments} resend={sendComment} />
+        <SwarmCommentList
+          className={classes?.comments}
+          comments={comments || []}
+          resend={sendComment}
+          loading={loading}
+        />
       </Tabs>
     </div>
   );
