@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { UserComment } from "@solarpunkltd/comment-system";
 
+import { formatTime } from "../../../utils/helpers";
+
 import styles from "./swarm-comment-list.module.scss";
 
 export interface SwarmCommentListProps {
@@ -44,7 +46,7 @@ export default function SwarmCommentList({ comments, loading, className, resend 
         : comments.map(({ username, message, timestamp, error }, index) => (
             <div key={index}>
               <p>
-                <strong>{username}</strong> on {new Date(timestamp).toDateString()}
+                <strong>{username}</strong> on {formatTime(timestamp)}
               </p>
               <p>{message.text}</p>
               {error && (

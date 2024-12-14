@@ -22,7 +22,7 @@ interface FormErrors {
   username?: string;
   text?: string;
 }
-// TODO: resend in case of error
+
 export default function SwarmCommentForm({ loading, onSubmit, maxCharacterCount, className }: SwarmCommentFormProps) {
   const [errors, setErrors] = useState<FormErrors>({});
 
