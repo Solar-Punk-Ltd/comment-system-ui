@@ -12,8 +12,8 @@ importers:
         specifier: ^8.3.1
         version: 8.3.1
       '@solarpunkltd/comment-system':
-        specifier: ^1.3.0
-        version: 1.3.0(rollup@4.28.1)(vite@5.4.11(@types/node@20.17.9)(sass@1.82.0))
+        specifier: ^1.5.1
+        version: 1.5.1(rollup@4.28.1)(vite@5.4.11(@types/node@20.17.9)(sass@1.82.0))
       clsx:
         specifier: ^2.1.1
         version: 2.1.1
@@ -591,8 +591,8 @@ packages:
   '@rtsao/scc@1.1.0':
     resolution: {integrity: sha512-zt6OdqaDoOnJ1ZYsCYGt9YmWzDXl4vQdKTyJev62gFhRGKdx7mcT54V9KIjg+d2wi9EXsPvAPKe7i7WjfVWB8g==}
 
-  '@solarpunkltd/comment-system@1.3.0':
-    resolution: {integrity: sha512-IKPURDEUTEM0VLwe82HXGr/N1fvGSqv6pJgtGGpBgDHm0YmfkD8gZUXAEoL/ZIn/OsK3Mz4EvwWgPHudNqPaPQ==}
+  '@solarpunkltd/comment-system@1.5.1':
+    resolution: {integrity: sha512-Ln5fjqVTpBs8zwyXlH2PhnB65XTWjLkgGny0zO8A+rHfsV7KechwrEG5LFX5RfL5Jpq450Kn0GpRsf2cHzOSVA==}
 
   '@types/babel__core@7.20.5':
     resolution: {integrity: sha512-qoQprZvz5wQFJwMDqeseRXWv3rqMvhgpbXFfVyWhbx9X47POIA6i/+dXefEmZKoAgOaTdaIgNSMqMIU61yRyzA==}
@@ -2637,7 +2637,7 @@ snapshots:
 
   '@rtsao/scc@1.1.0': {}
 
-  '@solarpunkltd/comment-system@1.3.0(rollup@4.28.1)(vite@5.4.11(@types/node@20.17.9)(sass@1.82.0))':
+  '@solarpunkltd/comment-system@1.5.1(rollup@4.28.1)(vite@5.4.11(@types/node@20.17.9)(sass@1.82.0))':
     dependencies:
       '@ethersphere/bee-js': 8.3.1
       cafe-utility: 21.5.0
