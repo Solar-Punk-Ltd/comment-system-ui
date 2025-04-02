@@ -1,10 +1,12 @@
 # Swarm Comment System web component
 
-This is an embeddable widget that can be added to any HTML page. It renders a decentralised discussion system where everybody can comment in tree structure.
+This is an embeddable widget that can be added to any HTML page. It renders a decentralised discussion system where
+everybody can comment in tree structure.
 
 ## Swarm network
 
-Swarm is a peer-to-peer network of Bee nodes that collectively provide censorship resistant decentralised storage and communication services.
+Swarm is a peer-to-peer network of Bee nodes that collectively provide censorship resistant decentralised storage and
+communication services.
 
 ## Example Usage
 
@@ -25,13 +27,14 @@ return (
     <App
       beeApiUrl="<your-node-address>"
       stamp={"<your-stamp>"}
-      privatekey={"<your-author-privetakey>"}
-      approvedFeedAddress={"<your-approved-address>"}
+      privateKey={"<your-author-privetakey>"}
       identifier={"<your-deisred-topic>"}
     />
   </React.StrictMode>,
 );
 ```
+
+If the **privateKey** or **identifier** is not provided then they will be deduced from the url by default.
 
 ## Recommended Usage
 

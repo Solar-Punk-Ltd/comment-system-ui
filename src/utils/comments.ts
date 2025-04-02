@@ -1,3 +1,4 @@
+import { FeedIndex } from "@ethersphere/bee-js";
 import { CommentsWithIndex, readCommentsInRange, readSingleComment, SingleComment } from "@solarpunkltd/comment-system";
 
 import { DEFAULT_NUM_OF_COMMENTS } from "./constants";
@@ -7,12 +8,12 @@ export const readLatestComment = async (
   identifier?: string,
   address?: string,
   beeApiUrl?: string,
-): Promise<SingleComment> => {
+): Promise<SingleComment | undefined> => {
   try {
     return await readSingleComment(undefined, {
-      identifier: identifier,
-      beeApiUrl: beeApiUrl,
-      approvedFeedAddress: address,
+      identifier,
+      address,
+      beeApiUrl,
     });
   } catch (err) {
     console.error(`Loading the latest comment of identifier ${identifier} error: ${err}`);
@@ -26,14 +27,18 @@ export const loadLatestComments = async (
   beeApiUrl?: string,
   numOfComments?: number,
 ): Promise<CommentsWithIndex> => {
-  const commentsToRead = numOfComments || DEFAULT_NUM_OF_COMMENTS;
+  const commentsToRead = (numOfComments || DEFAULT_NUM_OF_COMMENTS) - 1;
   try {
     const latestComment = await readLatestComment(identifier, address, beeApiUrl);
-    if (isEmpty(latestComment) || latestComment.nextIndex === undefined || latestComment.nextIndex === 0) {
+    if (
+      isEmpty(latestComment) ||
+      latestComment?.nextIndex === undefined ||
+      new FeedIndex(latestComment.nextIndex).toBigInt() === 0n
+    ) {
       return {} as CommentsWithIndex;
     }
     // if there is only one comment, return it
-    if (latestComment.nextIndex === 1) {
+    if (new FeedIndex(latestComment.nextIndex).toBigInt() === 1n) {
       return {
         comments: [latestComment.comment],
         nextIndex: latestComment.nextIndex,
@@ -41,12 +46,12 @@ export const loadLatestComments = async (
     }
 
     // the latest comment is already fetched
-    const endIx = latestComment.nextIndex - 2;
-    const startIx = endIx > commentsToRead ? endIx - commentsToRead + 1 : 0;
-    const comments = await readCommentsInRange(startIx, endIx, {
-      identifier: identifier,
-      beeApiUrl: beeApiUrl,
-      approvedFeedAddress: address,
+    const endIx = new FeedIndex(latestComment.nextIndex).toBigInt() - 2n;
+    const startIx = endIx > commentsToRead ? endIx - BigInt(commentsToRead) + 1n : 0n;
+    const comments = await readCommentsInRange(FeedIndex.fromBigInt(startIx), FeedIndex.fromBigInt(endIx), {
+      identifier,
+      beeApiUrl,
+      address,
     });
     return {
       comments: [...comments, latestComment.comment],
@@ -65,41 +70,41 @@ export const loadNextComments = async (
   beeApiUrl?: string,
   numOfComments?: number,
 ): Promise<CommentsWithIndex> => {
-  const commentsToRead = numOfComments || DEFAULT_NUM_OF_COMMENTS;
+  const commentsToRead = (numOfComments || DEFAULT_NUM_OF_COMMENTS) - 1;
   try {
     const latestComment = await readLatestComment(identifier, address, beeApiUrl);
     if (
       isEmpty(latestComment) ||
-      latestComment.nextIndex === undefined ||
-      latestComment.nextIndex === 0 ||
-      latestComment.nextIndex <= nextIx
+      latestComment?.nextIndex === undefined ||
+      new FeedIndex(latestComment.nextIndex).toBigInt() === 0n ||
+      new FeedIndex(latestComment.nextIndex).toBigInt() <= BigInt(nextIx)
     ) {
       return {} as CommentsWithIndex;
     }
     // if there is only one comment, return it
-    if (latestComment.nextIndex - nextIx === 1) {
+    if (new FeedIndex(latestComment.nextIndex).toBigInt() - BigInt(nextIx) === 1n) {
       return {
         comments: [latestComment.comment],
         nextIndex: latestComment.nextIndex,
       } as CommentsWithIndex;
     }
 
-    const startIx = nextIx === undefined ? 0 : nextIx;
-    let endIx = startIx + commentsToRead - 1;
+    const startIx = nextIx === undefined ? 0n : BigInt(nextIx);
+    let endIx = startIx + BigInt(commentsToRead) - 1n;
     // read until the end of the list or until commentsToRead is read
-    if (endIx >= latestComment.nextIndex) {
-      endIx = latestComment.nextIndex - 2;
+    if (endIx >= new FeedIndex(latestComment.nextIndex).toBigInt()) {
+      endIx = new FeedIndex(latestComment.nextIndex).toBigInt() - 2n;
     }
 
-    const comments = await readCommentsInRange(startIx, endIx, {
-      identifier: identifier,
-      beeApiUrl: beeApiUrl,
-      approvedFeedAddress: address,
+    const comments = await readCommentsInRange(FeedIndex.fromBigInt(startIx), FeedIndex.fromBigInt(endIx), {
+      identifier,
+      beeApiUrl,
+      address,
     });
     // the latest comment is already fetched
     return {
       comments: [...comments, latestComment.comment],
-      nextIndex: endIx + 1,
+      nextIndex: FeedIndex.fromBigInt(endIx + 1n).toString(),
     } as CommentsWithIndex;
   } catch (err) {
     `Loading the next ${commentsToRead} comments of identifier ${identifier} error: ${err}`;
