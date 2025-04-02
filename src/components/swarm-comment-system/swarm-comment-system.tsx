@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { FeedIndex, PrivateKey } from "@ethersphere/bee-js";
 import { readSingleComment, UserComment, writeCommentToIndex } from "@solarpunkltd/comment-system";
 
 import { loadLatestComments } from "../../utils/comments";
@@ -32,7 +33,7 @@ export interface SwarmCommentSystemProps {
   /**
    * The signer's private key
    */
-  privatekey?: string;
+  privatekey: string | PrivateKey;
   /**
    * Maximum number of comments to load per request. Defaults to DEFAULT_NUM_OF_COMMENTS.
    */
@@ -59,6 +60,8 @@ export function SwarmCommentSystem(props: SwarmCommentSystemProps) {
   const [category, setCategory] = useState<CATEGORIES>(CATEGORIES.APPROVED);
   const [loading, setLoading] = useState(true);
   const [formLoading, setFormLoading] = useState(false);
+
+  const signer = new PrivateKey(privatekey);
 
   // if resend is succesful then find, remove and push the currently error-flagged comment to the end of the list
   const onResend = (comment: SwarmCommentWithFlags) => {
@@ -106,20 +109,22 @@ export function SwarmCommentSystem(props: SwarmCommentSystemProps) {
 
       // trying to write to the next known index
       const lastComment = await readSingleComment(undefined, {
-        identifier: identifier,
-        beeApiUrl: beeApiUrl,
-        approvedFeedAddress: approvedFeedAddress,
+        identifier,
+        beeApiUrl,
+        approvedFeedAddress: signer.publicKey().address().toString(),
       });
-      const expNextIx = lastComment.nextIndex || 0;
+      const expNextIx =
+        lastComment.nextIndex !== undefined ? new FeedIndex(lastComment.nextIndex) : FeedIndex.fromBigInt(0n);
       const plainCommentReq: UserComment = {
         message: { ...comment.message },
         timestamp: comment.timestamp,
         username: comment.username,
       };
-      const newComment = await writeCommentToIndex(plainCommentReq, expNextIx, {
+
+      const newComment = await writeCommentToIndex(plainCommentReq, FeedIndex.fromBigInt(0n), {
         stamp,
-        identifier: identifier,
-        signer: privatekey,
+        identifier,
+        signer,
         beeApiUrl,
       });
 
@@ -129,12 +134,13 @@ export function SwarmCommentSystem(props: SwarmCommentSystemProps) {
       // need to check if the comment was written successfully to the expected index
       // nexitIx will be undefined if index is defined
       const commentCheck = await readSingleComment(expNextIx, {
-        identifier: identifier,
-        beeApiUrl: beeApiUrl,
-        approvedFeedAddress: approvedFeedAddress,
+        identifier,
+        beeApiUrl,
+        approvedFeedAddress: signer.publicKey().address().toString(),
       });
+
       if (
-        !commentCheck ||
+        isEmpty(commentCheck) ||
         commentCheck.comment.message.text !== comment.message.text ||
         commentCheck.comment.timestamp !== comment.timestamp
       ) {
@@ -164,7 +170,8 @@ export function SwarmCommentSystem(props: SwarmCommentSystemProps) {
       try {
         const newComments = await loadLatestComments(
           identifier,
-          category === CATEGORIES.APPROVED ? approvedFeedAddress : undefined,
+          // category === CATEGORIES.APPROVED ? approvedFeedAddress : signer.publicKey().address().toString(),
+          signer.publicKey().address().toString(),
           beeApiUrl,
           numOfComments,
         );
@@ -172,6 +179,9 @@ export function SwarmCommentSystem(props: SwarmCommentSystemProps) {
         if (!isEmpty(newComments)) {
           setComments(newComments.comments);
           console.log(`Loaded ${newComments.comments.length} comments of identifier ${identifier}`);
+        } else {
+          setComments([]);
+          console.log(`No comments found for identifier ${identifier}`);
         }
       } catch (err) {
         console.error("Loading comments error: ", err);
@@ -182,11 +192,9 @@ export function SwarmCommentSystem(props: SwarmCommentSystemProps) {
     loadComments();
   }, [approvedFeedAddress, beeApiUrl, identifier, numOfComments, category]);
 
-  if (!loading && !comments) {
-    return <div>Couldn't load comments</div>;
-  }
-
-  return (
+  return !loading && comments === null ? (
+    <div>Couldn't load comments</div>
+  ) : (
     <div className={classes?.wrapper}>
       <SwarmCommentForm
         className={classes?.form}
