@@ -3,10 +3,6 @@ import { SwarmCommentSystem, SwarmCommentSystemProps } from "./components/swarm-
 import "./App.css";
 
 export function App(props?: SwarmCommentSystemProps) {
-  if (!props?.privatekey) {
-    throw new Error("The 'privatekey' property is required.");
-  }
-
   return (
     <>
       <SwarmCommentSystem {...props} />

@@ -17,8 +17,8 @@ export default defineConfig(({ mode }) => {
       minify: isProd,
       lib: {
         entry: [resolve(__dirname, "src/index.ts")],
-        formats: ["es", "cjs", "umd"],
-        name: "SwarmCommentSystem", // TODO: rename to swarm-comment-system-ui
+        formats: ["es", "umd"],
+        name: "swarm-comment-system-ui",
         fileName: format => `index.${format}.js`,
       },
       sourcemap: isProd,

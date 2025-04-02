@@ -18,11 +18,20 @@
     "preview": "vite preview",
     "prepublishOnly": "npm run build"
   },
+  "exports": {
+    ".": {
+      "default": "./dist/index.umd.js",
+      "types": "./dist/types/index.d.ts",
+      "require": "./dist/index.umd.js",
+      "import": "./dist/index.es.js"
+    },
+    "./package.json": "./package.json"
+  },
   "files": [
     "dist"
   ],
   "dependencies": {
-    "@ethersphere/bee-js": "^9.0.3",
+    "@ethersphere/bee-js": "^9.1.0",
     "@solarpunkltd/comment-system": "^1.6.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"

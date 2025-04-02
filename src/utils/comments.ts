@@ -6,13 +6,13 @@ import { isEmpty } from "./helpers";
 
 export const readLatestComment = async (
   identifier?: string,
-  approvedFeedAddress?: string,
+  address?: string,
   beeApiUrl?: string,
-): Promise<SingleComment> => {
+): Promise<SingleComment | undefined> => {
   try {
     return await readSingleComment(undefined, {
       identifier,
-      approvedFeedAddress,
+      address,
       beeApiUrl,
     });
   } catch (err) {
@@ -27,12 +27,12 @@ export const loadLatestComments = async (
   beeApiUrl?: string,
   numOfComments?: number,
 ): Promise<CommentsWithIndex> => {
-  const commentsToRead = numOfComments || DEFAULT_NUM_OF_COMMENTS;
+  const commentsToRead = (numOfComments || DEFAULT_NUM_OF_COMMENTS) - 1;
   try {
     const latestComment = await readLatestComment(identifier, address, beeApiUrl);
     if (
       isEmpty(latestComment) ||
-      latestComment.nextIndex === undefined ||
+      latestComment?.nextIndex === undefined ||
       new FeedIndex(latestComment.nextIndex).toBigInt() === 0n
     ) {
       return {} as CommentsWithIndex;
@@ -51,7 +51,7 @@ export const loadLatestComments = async (
     const comments = await readCommentsInRange(FeedIndex.fromBigInt(startIx), FeedIndex.fromBigInt(endIx), {
       identifier,
       beeApiUrl,
-      approvedFeedAddress: address,
+      address,
     });
     return {
       comments: [...comments, latestComment.comment],
@@ -70,12 +70,12 @@ export const loadNextComments = async (
   beeApiUrl?: string,
   numOfComments?: number,
 ): Promise<CommentsWithIndex> => {
-  const commentsToRead = numOfComments || DEFAULT_NUM_OF_COMMENTS;
+  const commentsToRead = (numOfComments || DEFAULT_NUM_OF_COMMENTS) - 1;
   try {
     const latestComment = await readLatestComment(identifier, address, beeApiUrl);
     if (
       isEmpty(latestComment) ||
-      latestComment.nextIndex === undefined ||
+      latestComment?.nextIndex === undefined ||
       new FeedIndex(latestComment.nextIndex).toBigInt() === 0n ||
       new FeedIndex(latestComment.nextIndex).toBigInt() <= BigInt(nextIx)
     ) {
@@ -99,7 +99,7 @@ export const loadNextComments = async (
     const comments = await readCommentsInRange(FeedIndex.fromBigInt(startIx), FeedIndex.fromBigInt(endIx), {
       identifier,
       beeApiUrl,
-      approvedFeedAddress: address,
+      address,
     });
     // the latest comment is already fetched
     return {
