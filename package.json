@@ -31,8 +31,8 @@
     "dist"
   ],
   "dependencies": {
-    "@ethersphere/bee-js": "^9.1.0",
-    "@solarpunkltd/comment-system": "^1.6.1",
+    "@ethersphere/bee-js": "^9.1.1",
+    "@solarpunkltd/comment-system": "1.7.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"
   },

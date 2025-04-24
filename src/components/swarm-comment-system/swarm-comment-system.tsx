@@ -123,7 +123,7 @@ export function SwarmCommentSystem(props: SwarmCommentSystemProps) {
       const plainCommentReq: UserComment = {
         message: { ...comment.message },
         timestamp: comment.timestamp,
-        username: comment.username,
+        user: { username: comment.user.username, address: signerAddress || "bagoy" },
       };
 
       const newComment = await writeCommentToIndex(plainCommentReq, expNextIx, {

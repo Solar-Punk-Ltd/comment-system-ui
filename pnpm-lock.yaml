@@ -9,11 +9,11 @@ importers:
   .:
     dependencies:
       '@ethersphere/bee-js':
-        specifier: ^9.1.0
-        version: 9.1.0
+        specifier: ^9.1.1
+        version: 9.1.1
       '@solarpunkltd/comment-system':
-        specifier: ^1.6.1
-        version: 1.6.1
+        specifier: 1.7.0
+        version: 1.7.0
       react:
         specifier: ^18.3.1
         version: 18.3.1
@@ -390,8 +390,8 @@ packages:
     resolution: {integrity: sha512-ZAoA40rNMPwSm+AeHpCq8STiNAwzWLJuP8Xv4CHIc9wv/PSuExjMrmjfYNj682vW0OOiZ1HKxzvjQr9XZIisQA==}
     engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
 
-  '@ethersphere/bee-js@9.1.0':
-    resolution: {integrity: sha512-hMWScFHU5ZH4wZc6cGZsBRxxiW1uwBxhNzW5nJ/vdzwQx9/sL1zEuCBkBPrbnlfnj7/ubnDZHj93s5n0qZ64PA==}
+  '@ethersphere/bee-js@9.1.1':
+    resolution: {integrity: sha512-auDuO/9eXHCmGaJxCq/XWHz3hQYMhevEGWsjDo6fy9Eac44zg9Fw8cKhPUoZgZ6eoIkcVvXsL9YBVb6+esIC0Q==}
     engines: {bee: 2.4.0-390a402e, beeApiVersion: 7.2.0}
 
   '@humanfs/core@0.19.1':
@@ -703,8 +703,8 @@ packages:
   '@rushstack/ts-command-line@4.23.7':
     resolution: {integrity: sha512-Gr9cB7DGe6uz5vq2wdr89WbVDKz0UeuFEn5H2CfWDe7JvjFFaiV15gi6mqDBTbHhHCWS7w8mF1h3BnIfUndqdA==}
 
-  '@solarpunkltd/comment-system@1.6.1':
-    resolution: {integrity: sha512-YqM738p/B/O62V3OjcCACNg0AC4AQ5M9smWp0SasGLQAKPeTC6ya4q3o6RnmBwm1izpkdPjrqAvnNyYbO7d6jg==}
+  '@solarpunkltd/comment-system@1.7.0':
+    resolution: {integrity: sha512-xQvuH41omBpYSUjRu0hz/HVTDzlvtnmmAhJIZX3WAco3+X/jsl+F+tC8FFW98WpePmrBPUqZbW+BVOcndwKYxw==}
 
   '@tsconfig/node10@1.0.11':
     resolution: {integrity: sha512-DcRjDCujK/kCk/cUe8Xz8ZSpm8mS3mNNpta+jGCA6USEDfktlNvm1+IuZ9eTcDbNk41BHwpHHeW+N1lKCz4zOw==}
@@ -1100,8 +1100,8 @@ packages:
   builtin-status-codes@3.0.0:
     resolution: {integrity: sha512-HpGFw18DgFWlncDfjTa2rcQ4W88O1mC8e8yZ2AvQY5KDaktSTwo+KRf6nHK6FRI5FyRyb/5T6+TSxfP7QyGsmQ==}
 
-  cafe-utility@27.16.0:
-    resolution: {integrity: sha512-7xqxbUfEobzZzjHbiFM5lGoIf/MdZS+29FGUpL+YgsmEclE/SULYL3pRqHMAFH1chDQtfSBzJc69Pqv3bQWl0g==}
+  cafe-utility@27.18.0:
+    resolution: {integrity: sha512-aGcLjeOmy8mw5d0eDIB2SrvbRswRSCUIZFIlmhS1u7RXGeHLge+FmCV6AvEbTVbuNN2P9ZKJMbB8osJJOich8g==}
 
   call-bind-apply-helpers@1.0.2:
     resolution: {integrity: sha512-Sp1ablJ0ivDkSzjcaJdxEunN5/XvksFJ2sMBFfq6x0ryhQV/2b/KwFe21cMpmHtPOSij8K99/wSfoEuTObmuMQ==}
@@ -1464,8 +1464,8 @@ packages:
     resolution: {integrity: sha512-kVscqXk4OCp68SZ0dkgEKVi6/8ij300KBWTJq32P/dYeWTSwK41WyTxalN1eRmA5Z9UU/LX9D7FWSmV9SAYx6g==}
     engines: {node: '>=0.10.0'}
 
-  ethers@6.13.5:
-    resolution: {integrity: sha512-+knKNieu5EKRThQJWwqaJ10a6HE9sSehGeqWN65//wE7j47ZpFhKAnHB/JJFibwwg61I/koxaPsXbXpD/skNOQ==}
+  ethers@6.13.6:
+    resolution: {integrity: sha512-L3vauFXVJvtnCOqczpxXLnoBIuNtqjqlmSHbAZof/Z9MY6UHUoqnpoXajL2drHRAStZEoviVQePGyUOTsjN0rg==}
     engines: {node: '>=14.0.0'}
 
   events@3.3.0:
@@ -2946,10 +2946,10 @@ snapshots:
       '@eslint/core': 0.13.0
       levn: 0.4.1
 
-  '@ethersphere/bee-js@9.1.0':
+  '@ethersphere/bee-js@9.1.1':
     dependencies:
       axios: 0.30.0
-      cafe-utility: 27.16.0
+      cafe-utility: 27.18.0
       isomorphic-ws: 4.0.1(ws@8.18.1)
       semver: 7.7.1
       ws: 8.18.1
@@ -3237,11 +3237,11 @@ snapshots:
     transitivePeerDependencies:
       - '@types/node'
 
-  '@solarpunkltd/comment-system@1.6.1':
+  '@solarpunkltd/comment-system@1.7.0':
     dependencies:
-      '@ethersphere/bee-js': 9.1.0
-      cafe-utility: 27.16.0
-      ethers: 6.13.5
+      '@ethersphere/bee-js': 9.1.1
+      cafe-utility: 27.18.0
+      ethers: 6.13.6
       uuid: 11.1.0
     transitivePeerDependencies:
       - bufferutil
@@ -3730,7 +3730,7 @@ snapshots:
 
   builtin-status-codes@3.0.0: {}
 
-  cafe-utility@27.16.0: {}
+  cafe-utility@27.18.0: {}
 
   call-bind-apply-helpers@1.0.2:
     dependencies:
@@ -4240,7 +4240,7 @@ snapshots:
 
   esutils@2.0.3: {}
 
-  ethers@6.13.5:
+  ethers@6.13.6:
     dependencies:
       '@adraffy/ens-normalize': 1.10.1
       '@noble/curves': 1.2.0

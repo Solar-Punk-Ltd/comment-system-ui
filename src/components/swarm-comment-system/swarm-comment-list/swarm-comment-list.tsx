@@ -43,10 +43,11 @@ export default function SwarmCommentList({ comments, loading, className, resend 
     <div className={`${styles.swarmCommentList} ${className}`}>
       {loading
         ? "Loading"
-        : comments.map(({ username, message, timestamp, error }, index) => (
+        : comments.map(({ user, message, timestamp, error }, index) => (
             <div key={index}>
               <p>
-                <strong>{username}</strong> on {formatTime(timestamp)}
+                <strong>{user.username}</strong> on {formatTime(timestamp)}
+                <strong>{user.address}</strong>
               </p>
               <p>{message.text}</p>
               {error && (

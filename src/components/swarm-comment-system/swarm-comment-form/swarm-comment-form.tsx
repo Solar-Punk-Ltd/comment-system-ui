@@ -57,7 +57,7 @@ export default function SwarmCommentForm({ loading, onSubmit, maxCharacterCount,
     }
 
     try {
-      await onSubmit({ username: username, message: { text: text }, timestamp: Date.now() });
+      await onSubmit({ user: { username, address: "bagoy" }, message: { text: text }, timestamp: Date.now() });
     } catch (error) {
       console.error("Error submitting comment: ", error);
     }
