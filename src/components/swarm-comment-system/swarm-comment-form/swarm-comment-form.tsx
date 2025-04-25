@@ -2,6 +2,7 @@ import { useState } from "react";
 import { UserComment } from "@solarpunkltd/comment-system";
 
 import styles from "./swarm-comment-form.module.scss";
+import { EthAddress } from "@ethersphere/bee-js";
 
 export interface SwarmCommentFormProps {
   loading: boolean;
@@ -13,6 +14,7 @@ export interface SwarmCommentFormProps {
 interface FormElements extends HTMLFormControlsCollection {
   username: HTMLInputElement;
   text: HTMLInputElement;
+  address: HTMLInputElement;
 }
 interface CommentFormElement extends HTMLFormElement {
   readonly elements: FormElements;
@@ -21,6 +23,7 @@ interface CommentFormElement extends HTMLFormElement {
 interface FormErrors {
   username?: string;
   text?: string;
+  address?: string;
 }
 
 export default function SwarmCommentForm({ loading, onSubmit, maxCharacterCount, className }: SwarmCommentFormProps) {
@@ -37,6 +40,25 @@ export default function SwarmCommentForm({ loading, onSubmit, maxCharacterCount,
 
     return undefined;
   };
+
+  const validateAddress = (value: string): string | undefined => {
+    if (!value) {
+      return "This field is required.";
+    }
+
+    if (value.length !== 42) {
+      return "Address must be 42 characters long.";
+    }
+
+    try {
+      new EthAddress(value);
+    } catch (error) {
+      return "Invalid Ethereum address.";
+    }
+
+    return undefined;
+  };
+
   const hasErrors = (errors: FormErrors): boolean => {
     return Object.values(errors).some(value => Boolean(value));
   };
@@ -46,9 +68,11 @@ export default function SwarmCommentForm({ loading, onSubmit, maxCharacterCount,
     const elements = event.currentTarget.elements;
     const username = elements.username.value;
     const text = elements.text.value;
+    const address = elements.address.value;
     const errors: FormErrors = {
       username: validate(username),
       text: validate(text),
+      address: validateAddress(address),
     };
 
     if (hasErrors(errors)) {
@@ -57,7 +81,7 @@ export default function SwarmCommentForm({ loading, onSubmit, maxCharacterCount,
     }
 
     try {
-      await onSubmit({ user: { username, address: "bagoy" }, message: { text: text }, timestamp: Date.now() });
+      await onSubmit({ user: { username, address }, message: { text: text }, timestamp: Date.now() });
     } catch (error) {
       console.error("Error submitting comment: ", error);
     }
@@ -73,6 +97,16 @@ export default function SwarmCommentForm({ loading, onSubmit, maxCharacterCount,
         name="username"
         placeholder="Your name"
         disabled={loading}
+      />
+      <input
+        className={errors.address && styles["field-error"]}
+        onChange={() => setErrors({ ...errors, address: undefined })}
+        type="text"
+        name="address"
+        disabled={loading}
+        maxLength={42}
+        minLength={42}
+        placeholder={"0x1234567890123456789012345678901234567890"}
       />
       <textarea
         className={errors.text && styles["field-error"]}

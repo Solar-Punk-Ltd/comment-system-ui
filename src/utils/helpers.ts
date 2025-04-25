@@ -40,9 +40,12 @@ export function isSameDay(firstDate: Date, secondDate: Date) {
   );
 }
 
-export function isEmpty(obj?: object) {
+export function isEmpty(obj?: object | Array<any>): boolean {
   if (!obj) {
     return true;
+  }
+  if (Array.isArray(obj)) {
+    return obj.length === 0;
   }
   return Object.keys(obj).length === 0;
 }
