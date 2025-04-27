@@ -7,6 +7,7 @@ import {
   Reaction,
   ReactionsWithIndex,
   updateReactions,
+  User,
   UserComment,
   writeReactionsToIndex,
 } from "@solarpunkltd/comment-system";
@@ -39,6 +40,7 @@ export default function SwarmCommentList({
   loading,
   signer,
   beeApiUrl,
+  stamp,
   className,
   resend,
 }: SwarmCommentListProps) {
@@ -108,6 +110,17 @@ export default function SwarmCommentList({
   };
 
   const handleOnClick = async (reactionType: ReactionType, comment: UserComment): Promise<void> => {
+    const userItem = localStorage.getItem("user");
+    let user: User | undefined;
+    if (userItem) {
+      const parsedUser = JSON.parse(userItem);
+      user = { username: parsedUser.username, address: parsedUser.address };
+    }
+    if (!user) {
+      console.error("User not found");
+      return;
+    }
+
     if (sendingReaction) return;
 
     const messageId = comment.message.messageId;
@@ -119,13 +132,13 @@ export default function SwarmCommentList({
     };
 
     const existingReaction = reactions.reactions.find(
-      (r: Reaction) => r.reactionType === reactionType && r.user.address === comment.user.address,
+      (r: Reaction) => r.reactionType === reactionType && r.user.address === user?.address,
     );
     const action = existingReaction ? Action.REMOVE : Action.ADD;
     const newReactions = updateReactions(
       reactions.reactions,
       {
-        user: comment.user,
+        user,
         targetMessageId: messageId,
         timestamp: Date.now(),
         reactionType,
@@ -145,6 +158,7 @@ export default function SwarmCommentList({
       identifier,
       beeApiUrl,
       signer,
+      stamp,
     });
     setReactionsPerComments(prev =>
       prev.set(messageId, {

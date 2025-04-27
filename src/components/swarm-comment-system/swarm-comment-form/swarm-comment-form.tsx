@@ -1,6 +1,6 @@
 import { EthAddress } from "@ethersphere/bee-js";
-import { UserComment } from "@solarpunkltd/comment-system";
-import React, { useState } from "react";
+import { User, UserComment } from "@solarpunkltd/comment-system";
+import React, { useEffect, useState } from "react";
 
 import styles from "./swarm-comment-form.module.scss";
 
@@ -28,6 +28,7 @@ interface FormErrors {
 
 export default function SwarmCommentForm({ loading, onSubmit, maxCharacterCount, className }: SwarmCommentFormProps) {
   const [errors, setErrors] = useState<FormErrors>({});
+  const [user, setUser] = useState<User | undefined>(undefined);
 
   const validate = (value: string): string | undefined => {
     if (!value) {
@@ -82,10 +83,22 @@ export default function SwarmCommentForm({ loading, onSubmit, maxCharacterCount,
 
     try {
       await onSubmit({ user: { username, address }, message: { text: text }, timestamp: Date.now() });
+      if (!user) {
+        localStorage.setItem("user", JSON.stringify({ username, address }));
+        setUser({ username, address });
+      }
     } catch (error) {
       console.error("Error submitting comment: ", error);
     }
   };
+
+  useEffect(() => {
+    const userItem = localStorage.getItem("user");
+    if (userItem) {
+      const parsedUser = JSON.parse(userItem);
+      setUser({ username: parsedUser.username, address: parsedUser.address });
+    }
+  }, []);
 
   return (
     <form className={`${styles["swarm-comment-form"]} ${className}`} onSubmit={submit}>
@@ -97,6 +110,7 @@ export default function SwarmCommentForm({ loading, onSubmit, maxCharacterCount,
         name="username"
         placeholder="Your name"
         disabled={loading}
+        defaultValue={user ? user.username : ""}
       />
       <input
         className={errors.address && styles["field-error"]}
@@ -107,6 +121,7 @@ export default function SwarmCommentForm({ loading, onSubmit, maxCharacterCount,
         maxLength={42}
         minLength={42}
         placeholder={"0x1234567890123456789012345678901234567890"}
+        defaultValue={user ? user.address : ""}
       />
       <textarea
         className={errors.text && styles["field-error"]}
