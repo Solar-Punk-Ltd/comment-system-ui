@@ -1,7 +1,12 @@
 import { FeedIndex } from "@ethersphere/bee-js";
-import { readReactionsWithIndex, ReactionsWithIndex } from "@solarpunkltd/comment-system";
+import { ReactionsWithIndex, readReactionsWithIndex } from "@solarpunkltd/comment-system";
 
 import { isEmpty } from "./helpers";
+
+export enum ReactionType {
+  LIKE = "like",
+  DISLIKE = "dislike",
+}
 
 export const readLatestReactions = async (
   index?: FeedIndex,

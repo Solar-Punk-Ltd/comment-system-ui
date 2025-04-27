@@ -9,7 +9,6 @@
   "scripts": {
     "dev": "vite",
     "build": "rimraf dist && tsc && vite build",
-    "clean": "rm -rf ./dist",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "lint:fix": "npm run lint -- --fix",
     "prepare": "npm run build",
@@ -32,7 +31,7 @@
   ],
   "dependencies": {
     "@ethersphere/bee-js": "^9.1.1",
-    "@solarpunkltd/comment-system": "^1.7.2",
+    "@solarpunkltd/comment-system": "^1.7.3",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"
   },
@@ -51,6 +50,7 @@
     "eslint-config-prettier": "^10.1.1",
     "eslint-import-resolver-typescript": "^4.3.1",
     "eslint-plugin-import": "^2.29.1",
+    "eslint-plugin-jest": "^28.11.0",
     "eslint-plugin-prettier": "^5.2.5",
     "eslint-plugin-react": "^7.33.2",
     "eslint-plugin-react-hooks": "^5.2.0",

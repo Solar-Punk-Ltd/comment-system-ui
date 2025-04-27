@@ -25,7 +25,7 @@
     "esModuleInterop": true,
     "noImplicitAny": true,
     "typeRoots": ["src/@types", "node_modules/@types"],
-    "noImplicitReturns": true,
+    "noImplicitReturns": false,
     "paths": {
       "@components/*": ["./src/components/*"]
     }

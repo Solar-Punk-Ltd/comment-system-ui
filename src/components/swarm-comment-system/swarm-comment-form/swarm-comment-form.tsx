@@ -1,8 +1,8 @@
-import { useState } from "react";
+import { EthAddress } from "@ethersphere/bee-js";
 import { UserComment } from "@solarpunkltd/comment-system";
+import React, { useState } from "react";
 
 import styles from "./swarm-comment-form.module.scss";
-import { EthAddress } from "@ethersphere/bee-js";
 
 export interface SwarmCommentFormProps {
   loading: boolean;
@@ -53,7 +53,7 @@ export default function SwarmCommentForm({ loading, onSubmit, maxCharacterCount,
     try {
       new EthAddress(value);
     } catch (error) {
-      return "Invalid Ethereum address.";
+      return `Invalid Ethereum address: ${error}`;
     }
 
     return undefined;

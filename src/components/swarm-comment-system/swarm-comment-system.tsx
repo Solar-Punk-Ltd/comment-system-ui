@@ -1,6 +1,6 @@
-import { useEffect, useRef, useState } from "react";
 import { Bee, FeedIndex, PrivateKey } from "@ethersphere/bee-js";
 import { readSingleComment, UserComment, writeCommentToIndex } from "@solarpunkltd/comment-system";
+import { useEffect, useRef, useState } from "react";
 
 import { loadLatestComments, loadNextComments } from "../../utils/comments";
 import { DEFAULT_BEE_API_URL } from "../../utils/constants";
@@ -117,11 +117,9 @@ export function SwarmCommentSystem(props: SwarmCommentSystemProps) {
         beeApiUrl,
         address: signerAddress,
       });
-      console.log("bagoy lastComment.nextIndex: ", lastComment?.nextIndex?.toString());
 
       const expNextIx =
         lastComment?.nextIndex !== undefined ? new FeedIndex(lastComment.nextIndex) : FeedIndex.fromBigInt(0n);
-      console.log("bagoy expNextIx: ", expNextIx.toString());
       const plainCommentReq: UserComment = {
         message: { ...comment.message },
         timestamp: comment.timestamp,

@@ -1,19 +1,21 @@
-import { useEffect, useState } from "react";
 import { FeedIndex, PrivateKey } from "@ethersphere/bee-js";
+import ThumbDownIcon from "@mui/icons-material/ThumbDown";
+import ThumbUpIcon from "@mui/icons-material/ThumbUp";
 import {
+  Action,
   getReactionFeedId,
   Reaction,
   ReactionsWithIndex,
+  updateReactions,
   UserComment,
   writeReactionsToIndex,
 } from "@solarpunkltd/comment-system";
-import ThumbUpIcon from "@mui/icons-material/ThumbUp";
-import ThumbDownIcon from "@mui/icons-material/ThumbDown";
+import { useEffect, useState } from "react";
 
 import { formatTime } from "../../../utils/helpers";
+import { ReactionType, readLatestReactions } from "../../../utils/reactions";
 
 import styles from "./swarm-comment-list.module.scss";
-import { readLatestReactions } from "../../../utils/reactions";
 
 export interface SwarmCommentListProps {
   comments: SwarmCommentWithFlags[];
@@ -30,11 +32,6 @@ export interface SwarmCommentWithFlags extends UserComment {
   resend?: (comment: SwarmCommentWithFlags) => Promise<void>;
 }
 
-enum ReactionType {
-  LIKE = "like",
-  DISLIKE = "dislike",
-}
-
 export default function SwarmCommentList({
   comments,
   loading,
@@ -43,7 +40,8 @@ export default function SwarmCommentList({
   className,
   resend,
 }: SwarmCommentListProps) {
-  const [sending, setSending] = useState<boolean>(false);
+  const [sendingComment, setSendingComment] = useState<boolean>(false);
+  const [sendingReaction, setSendingReaction] = useState<boolean>(false);
   const [loadReactions, setLoadReactions] = useState<boolean>(true);
   const [reactionsPerComments, setReactionsPerComments] = useState<Map<string, ReactionsWithIndex>>(new Map());
 
@@ -53,11 +51,10 @@ export default function SwarmCommentList({
     }
 
     // Loads reactions for each of the comments
-    const loadReactionsForComments = async (commentId: string, userAddress: string): Promise<void> => {
+    const loadReactionsForComments = async (commentId: string, address?: string): Promise<void> => {
       try {
-        const reactionFeedId = getReactionFeedId(commentId);
-        const latestReactions = await readLatestReactions(undefined, reactionFeedId.toString(), userAddress, beeApiUrl);
-        console.log("bagoy latestReactions  : ", latestReactions);
+        const identifier = getReactionFeedId(commentId).toString();
+        const latestReactions = await readLatestReactions(undefined, identifier, address, beeApiUrl);
 
         if (latestReactions) {
           setReactionsPerComments(prev => prev.set(commentId, latestReactions));
@@ -72,7 +69,7 @@ export default function SwarmCommentList({
       setLoadReactions(true);
       for (const comment of comments) {
         if (comment.message.messageId) {
-          await loadReactionsForComments(comment.message.messageId, comment.user.address);
+          await loadReactionsForComments(comment.message.messageId, signer?.publicKey().address().toString());
         }
       }
       setLoadReactions(false);
@@ -89,14 +86,14 @@ export default function SwarmCommentList({
     };
     retryComment.timestamp = Date.now();
 
-    setSending(true);
+    setSendingComment(true);
     try {
       await resend(retryComment);
     } catch (err) {
       console.error("Resend comment error: ", err);
     }
 
-    setSending(false);
+    setSendingComment(false);
   };
 
   const mapReactions = (reactionType: ReactionType, commentId?: string): Reaction[] => {
@@ -108,7 +105,9 @@ export default function SwarmCommentList({
     return reactions.reactions.filter(r => r.reactionType === reactionType);
   };
 
-  const handleOnlick = async (reactionType: ReactionType, comment: UserComment): Promise<void> => {
+  const handleOnClick = async (reactionType: ReactionType, comment: UserComment): Promise<void> => {
+    if (sendingReaction) return;
+
     const messageId = comment.message.messageId;
     if (!messageId) return;
 
@@ -116,20 +115,28 @@ export default function SwarmCommentList({
       reactions: [],
       nextIndex: FeedIndex.fromBigInt(0n).toString(),
     };
-    console.log("bagoy handleOnlick reactions: ", reactions);
 
-    const newReactions: Reaction[] = [
-      ...reactions.reactions,
+    const newReactions = updateReactions(
+      reactions.reactions,
       {
         user: comment.user,
         targetMessageId: messageId,
         timestamp: Date.now(),
         reactionType,
       },
-    ];
+      Action.ADD,
+    );
+    // TODO: doubleclcick == remove ?
+    if (!newReactions) {
+      console.debug("reactions not changed");
+      return;
+    }
+
     const nextIndex = new FeedIndex(reactions.nextIndex);
+    const identifier = getReactionFeedId(messageId).toString();
+    setSendingReaction(true);
     await writeReactionsToIndex(newReactions, nextIndex, {
-      identifier: messageId,
+      identifier,
       beeApiUrl,
       signer,
     });
@@ -139,6 +146,7 @@ export default function SwarmCommentList({
         nextIndex: FeedIndex.fromBigInt(nextIndex.toBigInt() + 1n).toString(),
       }),
     );
+    setSendingReaction(false);
   };
 
   return (
@@ -156,14 +164,14 @@ export default function SwarmCommentList({
                 <div className={`${styles["swarm-comment-list"]}_${className}__reactions`}>
                   <div
                     className={`${styles["swarm-comment-list"]}_${className}__${ReactionType.LIKE}`}
-                    onClick={() => handleOnlick(ReactionType.LIKE, { user, message, timestamp })}
+                    onClick={() => handleOnClick(ReactionType.LIKE, { user, message, timestamp })}
                   >
                     <ThumbUpIcon />
                     {mapReactions(ReactionType.LIKE, message.messageId).length}
                   </div>
                   <div
                     className={`${styles["swarm-comment-list"]}_${className}__${ReactionType.DISLIKE}`}
-                    onClick={() => handleOnlick(ReactionType.DISLIKE, { user, message, timestamp })}
+                    onClick={() => handleOnClick(ReactionType.DISLIKE, { user, message, timestamp })}
                   >
                     <ThumbDownIcon />
                     {mapReactions(ReactionType.DISLIKE, message.messageId).length}
@@ -175,7 +183,7 @@ export default function SwarmCommentList({
                   <button
                     className="swarm-comment-try-again-button"
                     onClick={() => resendComment(comments[index])}
-                    disabled={sending}
+                    disabled={sendingComment}
                   >
                     Try again{" "}
                   </button>

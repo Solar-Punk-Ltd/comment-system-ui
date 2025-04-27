@@ -107,7 +107,7 @@ export const loadNextComments = async (
       nextIndex: FeedIndex.fromBigInt(endIx + 1n).toString(),
     } as CommentsWithIndex;
   } catch (err) {
-    `Loading the next ${commentsToRead} comments of identifier ${identifier} error: ${err}`;
+    console.error(`Loading the next ${commentsToRead} comments of identifier ${identifier} error: ${err}`);
     return {} as CommentsWithIndex;
   }
 };
