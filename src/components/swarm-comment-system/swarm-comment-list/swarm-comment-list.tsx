@@ -32,6 +32,8 @@ export interface SwarmCommentWithFlags extends UserComment {
   resend?: (comment: SwarmCommentWithFlags) => Promise<void>;
 }
 
+const reactionsClassName = "reactions";
+
 export default function SwarmCommentList({
   comments,
   loading,
@@ -116,6 +118,10 @@ export default function SwarmCommentList({
       nextIndex: FeedIndex.fromBigInt(0n).toString(),
     };
 
+    const existingReaction = reactions.reactions.find(
+      (r: Reaction) => r.reactionType === reactionType && r.user.address === comment.user.address,
+    );
+    const action = existingReaction ? Action.REMOVE : Action.ADD;
     const newReactions = updateReactions(
       reactions.reactions,
       {
@@ -124,10 +130,10 @@ export default function SwarmCommentList({
         timestamp: Date.now(),
         reactionType,
       },
-      Action.ADD,
+      action,
     );
-    // TODO: doubleclcick == remove ?
-    if (!newReactions) {
+
+    if (newReactions === undefined) {
       console.debug("reactions not changed");
       return;
     }
@@ -161,16 +167,16 @@ export default function SwarmCommentList({
               </p>
               <p>{message.text}</p>
               {!error && !loadReactions ? (
-                <div className={`${styles["swarm-comment-list"]}_${className}__reactions`}>
+                <div className={`${styles["swarm-comment-list"]}__${reactionsClassName}`}>
                   <div
-                    className={`${styles["swarm-comment-list"]}_${className}__${ReactionType.LIKE}`}
+                    className={`${styles["swarm-comment-list"]}__${reactionsClassName}_${ReactionType.LIKE}`}
                     onClick={() => handleOnClick(ReactionType.LIKE, { user, message, timestamp })}
                   >
                     <ThumbUpIcon />
                     {mapReactions(ReactionType.LIKE, message.messageId).length}
                   </div>
                   <div
-                    className={`${styles["swarm-comment-list"]}_${className}__${ReactionType.DISLIKE}`}
+                    className={`${styles["swarm-comment-list"]}__${reactionsClassName}_${ReactionType.DISLIKE}`}
                     onClick={() => handleOnClick(ReactionType.DISLIKE, { user, message, timestamp })}
                   >
                     <ThumbDownIcon />
