@@ -63,7 +63,7 @@ export default function SwarmCommentList({
         if (latestReactions) {
           setReactionsPerComments(prev => prev.set(commentId, latestReactions));
         }
-        console.log(`Loaded reactions for comment ID ${commentId}`);
+        console.debug(`Loaded reactions for comment ID ${commentId}`);
       } catch (err) {
         console.error(`Loading for comment ID ${commentId} error: ${err}`);
       }

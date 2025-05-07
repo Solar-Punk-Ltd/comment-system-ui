@@ -71,7 +71,7 @@ export function SwarmCommentSystem(props: SwarmCommentSystemProps) {
       c => c.error && c.message.text === comment.message.text && c.message.messageId === comment.message.messageId,
     );
     if (foundIX > -1) {
-      console.log(`Removing failed comment at index: ${foundIX}`);
+      console.debug(`Removing failed comment at index: ${foundIX}`);
       const tmpComments = [...comments];
       tmpComments.splice(foundIX, 1);
       tmpComments.push({
@@ -153,7 +153,7 @@ export function SwarmCommentSystem(props: SwarmCommentSystemProps) {
         throw `comment check failed, expected "${comment.message.text}", got: "${commentCheck?.comment.message.text}".
                 Expected timestamp: ${comment.timestamp}, got: ${commentCheck?.comment.timestamp}`;
       }
-      console.log(`Writing a new comment to index ${expNextIx} was successful: `, newComment);
+      console.debug(`Writing a new comment to index ${expNextIx} was successful: `, newComment);
 
       if (comment.error === true) {
         onResend(comment);
@@ -199,10 +199,10 @@ export function SwarmCommentSystem(props: SwarmCommentSystemProps) {
 
         if (!isEmpty(newComments)) {
           setComments(newComments.comments);
-          console.log(`Loaded ${newComments.comments.length} comments of identifier ${identifier}`);
+          console.debug(`Loaded ${newComments.comments.length} comments of identifier ${identifier}`);
         } else {
           setComments([]);
-          console.log(`No comments found for identifier ${identifier}`);
+          console.debug(`No comments found for identifier ${identifier}`);
         }
       } catch (err) {
         console.error("Loading comments error: ", err);
@@ -240,7 +240,7 @@ export function SwarmCommentSystem(props: SwarmCommentSystemProps) {
 
           if (!isEmpty(newComments)) {
             setComments(prevComments => [...(prevComments || []), ...newComments.comments]);
-            console.log(`Loaded ${newComments.comments.length} more comments of identifier ${identifier}`);
+            console.debug(`Loaded ${newComments.comments.length} more comments of identifier ${identifier}`);
           }
         }}
       >
