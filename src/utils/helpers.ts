@@ -1,4 +1,4 @@
-export function formatTime(timestamp?: number) {
+export function formatTime(timestamp?: number): string {
   if (!timestamp) {
     return "";
   }
@@ -12,7 +12,7 @@ export function formatTime(timestamp?: number) {
       hour12: false,
     });
 
-  const formatDate = (date: Date) => date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  const formatDate = (date: Date): string => date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
 
   if (isSameDay(date, now)) {
     return formatHM(date);
@@ -32,7 +32,7 @@ export function formatTime(timestamp?: number) {
   return `${date.getFullYear()} ${formatDate(date)} ${formatHM(date)}`;
 }
 
-export function isSameDay(firstDate: Date, secondDate: Date) {
+export function isSameDay(firstDate: Date, secondDate: Date): boolean {
   return (
     firstDate.getDate() === secondDate.getDate() &&
     firstDate.getMonth() === secondDate.getMonth() &&
@@ -40,9 +40,12 @@ export function isSameDay(firstDate: Date, secondDate: Date) {
   );
 }
 
-export function isEmpty(obj?: object) {
+export function isEmpty(obj?: object | Array<any>): boolean {
   if (!obj) {
     return true;
+  }
+  if (Array.isArray(obj)) {
+    return obj.length === 0;
   }
   return Object.keys(obj).length === 0;
 }

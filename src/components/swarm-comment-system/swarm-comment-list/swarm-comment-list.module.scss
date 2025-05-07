@@ -1,2 +1,27 @@
 .swarm-comment-list {
+  .active {
+    background-color: #999;
+  }
+}
+
+.swarm-comment-list {
+  &__reactions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+
+    &_like {
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    &_dislike {
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+  }
 }

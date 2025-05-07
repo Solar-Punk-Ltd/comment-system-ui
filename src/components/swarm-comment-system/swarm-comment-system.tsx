@@ -1,6 +1,6 @@
-import { useEffect, useRef, useState } from "react";
 import { Bee, FeedIndex, PrivateKey } from "@ethersphere/bee-js";
 import { readSingleComment, UserComment, writeCommentToIndex } from "@solarpunkltd/comment-system";
+import { useEffect, useRef, useState } from "react";
 
 import { loadLatestComments, loadNextComments } from "../../utils/comments";
 import { DEFAULT_BEE_API_URL } from "../../utils/constants";
@@ -54,7 +54,7 @@ export function SwarmCommentSystem(props: SwarmCommentSystemProps) {
 
   const [batchId, setBatchId] = useState<string | undefined>(undefined);
   const [comments, setComments] = useState<SwarmCommentWithFlags[] | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loadingComments, setLoadingComments] = useState(true);
   const [formLoading, setFormLoading] = useState(false);
   const sending = useRef<boolean>(undefined);
 
@@ -71,7 +71,7 @@ export function SwarmCommentSystem(props: SwarmCommentSystemProps) {
       c => c.error && c.message.text === comment.message.text && c.message.messageId === comment.message.messageId,
     );
     if (foundIX > -1) {
-      console.log(`Removing failed comment at index: ${foundIX}`);
+      console.debug(`Removing failed comment at index: ${foundIX}`);
       const tmpComments = [...comments];
       tmpComments.splice(foundIX, 1);
       tmpComments.push({
@@ -123,7 +123,7 @@ export function SwarmCommentSystem(props: SwarmCommentSystemProps) {
       const plainCommentReq: UserComment = {
         message: { ...comment.message },
         timestamp: comment.timestamp,
-        username: comment.username,
+        user: { username: comment.user.username, address: comment.user.address },
       };
 
       const newComment = await writeCommentToIndex(plainCommentReq, expNextIx, {
@@ -153,12 +153,12 @@ export function SwarmCommentSystem(props: SwarmCommentSystemProps) {
         throw `comment check failed, expected "${comment.message.text}", got: "${commentCheck?.comment.message.text}".
                 Expected timestamp: ${comment.timestamp}, got: ${commentCheck?.comment.timestamp}`;
       }
-      console.log(`Writing a new comment to index ${expNextIx} was successful: `, newComment);
+      console.debug(`Writing a new comment to index ${expNextIx} was successful: `, newComment);
 
       if (comment.error === true) {
         onResend(comment);
       } else {
-        setComments(prevComments => [...(prevComments || []), comment]);
+        setComments(prevComments => [...(prevComments || []), commentCheck.comment]);
       }
 
       sending.current = false;
@@ -193,27 +193,27 @@ export function SwarmCommentSystem(props: SwarmCommentSystemProps) {
   useEffect(() => {
     // Loads comments for the given identifier
     const loadComments = async (): Promise<void> => {
-      setLoading(true);
+      setLoadingComments(true);
       try {
         const newComments = await loadLatestComments(identifier, signerAddress, beeApiUrl, numOfComments);
 
         if (!isEmpty(newComments)) {
           setComments(newComments.comments);
-          console.log(`Loaded ${newComments.comments.length} comments of identifier ${identifier}`);
+          console.debug(`Loaded ${newComments.comments.length} comments of identifier ${identifier}`);
         } else {
           setComments([]);
-          console.log(`No comments found for identifier ${identifier}`);
+          console.debug(`No comments found for identifier ${identifier}`);
         }
       } catch (err) {
         console.error("Loading comments error: ", err);
       }
-      setLoading(false);
+      setLoadingComments(false);
     };
 
     loadComments();
   }, [signerAddress, beeApiUrl, identifier, numOfComments]);
 
-  if (loading) {
+  if (loadingComments) {
     return <div className={classes?.wrapper}>Loading comments...</div>;
   }
 
@@ -222,9 +222,9 @@ export function SwarmCommentSystem(props: SwarmCommentSystemProps) {
   ) : (
     <div className={classes?.wrapper}>
       <SwarmCommentForm
-        className={classes?.form}
+        className={classes?.form || "form"}
         onSubmit={sendComment}
-        loading={loading || formLoading}
+        loading={loadingComments || formLoading}
         maxCharacterCount={maxCharacterCount}
       />
       <button
@@ -240,7 +240,7 @@ export function SwarmCommentSystem(props: SwarmCommentSystemProps) {
 
           if (!isEmpty(newComments)) {
             setComments(prevComments => [...(prevComments || []), ...newComments.comments]);
-            console.log(`Loaded ${newComments.comments.length} more comments of identifier ${identifier}`);
+            console.debug(`Loaded ${newComments.comments.length} more comments of identifier ${identifier}`);
           }
         }}
       >
@@ -248,16 +248,19 @@ export function SwarmCommentSystem(props: SwarmCommentSystemProps) {
       </button>
       <Tabs
         activeTab={0}
-        className={classes?.tabs}
-        disabled={[loading, formLoading]}
+        className={classes?.tabs || "tabs"}
+        disabled={[loadingComments, formLoading]}
         tabs={["Comments"]}
         onTabChange={() => {}}
       >
         <SwarmCommentList
-          className={classes?.comments}
+          className={classes?.comments || "comments"}
           comments={comments || []}
           resend={sendComment}
-          loading={loading}
+          loading={loadingComments}
+          signer={signer}
+          stamp={stamp}
+          beeApiUrl={beeApiUrl}
         />
       </Tabs>
     </div>
