@@ -2,10 +2,8 @@ import { FeedIndex, PrivateKey } from "@ethersphere/bee-js";
 import ThumbDownIcon from "@mui/icons-material/ThumbDown";
 import ThumbUpIcon from "@mui/icons-material/ThumbUp";
 import {
-  Action,
   getReactionFeedId,
   Reaction,
-  ReactionsWithIndex,
   updateReactions,
   User,
   UserComment,
@@ -131,7 +129,11 @@ export default function SwarmCommentList({
     return reactions.filter(r => r.reactionType === reactionType);
   };
 
-  const handleOnClick = async (reactionType: ReactionType, comment: UserComment): Promise<void> => {
+  const handleOnClick = async (
+    reactionType: ReactionType,
+    comment: UserComment,
+    reactionId?: string,
+  ): Promise<void> => {
     if (!currentUser) {
       console.error("User not found");
       return;
@@ -148,23 +150,14 @@ export default function SwarmCommentList({
       return;
     }
 
-    const reactionsOfComment = reactionsPerComments.get(messageId) || [];
-    // TODO: rework update logic
-    const existingReaction = reactionsOfComment.filter(
-      r =>
-        r.reactionType === reactionType && r.user.address === currentUser?.address && r.targetMessageId === messageId,
-    );
-    const action = existingReaction ? Action.REMOVE : Action.ADD;
-    const newReactions = updateReactions(
-      reactionsOfComment,
-      {
-        user: currentUser,
-        targetMessageId: messageId,
-        timestamp: Date.now(),
-        reactionType,
-      },
-      action,
-    );
+    const allReactions = Array.from(reactionsPerComments.values()).flat();
+    const newReactions = updateReactions(allReactions, {
+      user: currentUser,
+      targetMessageId: messageId,
+      timestamp: Date.now(),
+      reactionType,
+      reactionId,
+    });
 
     if (newReactions === undefined) {
       console.debug("Reactions did not change");
