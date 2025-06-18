@@ -8,21 +8,21 @@ export enum ReactionType {
   DISLIKE = "dislike",
 }
 
-export const readLatestReactions = async (
+export const readReactionsState = async (
   index?: FeedIndex,
   identifier?: string,
   address?: string,
   beeApiUrl?: string,
 ): Promise<ReactionsWithIndex | undefined> => {
   try {
-    const latestReactions = await readReactionsWithIndex(index, {
+    const reactionsState = await readReactionsWithIndex(index, {
       identifier,
       address,
       beeApiUrl,
     });
 
-    if (!isEmpty(latestReactions)) {
-      return latestReactions as ReactionsWithIndex;
+    if (!isEmpty(reactionsState)) {
+      return reactionsState as ReactionsWithIndex;
     }
 
     return;

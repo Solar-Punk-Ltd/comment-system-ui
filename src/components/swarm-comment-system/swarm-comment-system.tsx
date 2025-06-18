@@ -258,6 +258,7 @@ export function SwarmCommentSystem(props: SwarmCommentSystemProps) {
           comments={comments || []}
           resend={sendComment}
           loading={loadingComments}
+          identifier={identifier}
           signer={signer}
           stamp={stamp}
           beeApiUrl={beeApiUrl}

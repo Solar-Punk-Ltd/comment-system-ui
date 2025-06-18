@@ -14,7 +14,7 @@ import {
 import { useEffect, useState } from "react";
 
 import { formatTime } from "../../../utils/helpers";
-import { ReactionType, readLatestReactions } from "../../../utils/reactions";
+import { ReactionType, readReactionsState } from "../../../utils/reactions";
 
 import styles from "./swarm-comment-list.module.scss";
 
@@ -24,6 +24,7 @@ export interface SwarmCommentListProps {
   beeApiUrl: string | undefined;
   stamp: string | undefined;
   loading: boolean;
+  identifier?: string;
   className?: string;
   resend?: (comment: SwarmCommentWithFlags) => Promise<void>;
 }
@@ -39,15 +40,28 @@ export default function SwarmCommentList({
   comments,
   loading,
   signer,
+  identifier,
   beeApiUrl,
   stamp,
   className,
   resend,
 }: SwarmCommentListProps) {
+  const [currentUser, setCurrentUser] = useState<User | undefined>(undefined);
   const [sendingComment, setSendingComment] = useState<boolean>(false);
   const [sendingReaction, setSendingReaction] = useState<boolean>(false);
   const [loadReactions, setLoadReactions] = useState<boolean>(true);
-  const [reactionsPerComments, setReactionsPerComments] = useState<Map<string, ReactionsWithIndex>>(new Map());
+  const [reactionsPerComments, setReactionsPerComments] = useState<Map<string, Reaction[]>>(new Map());
+  const [nextIndex, setNextIndex] = useState<FeedIndex | undefined>(undefined);
+
+  const reactionFeedId = getReactionFeedId(identifier).toString();
+
+  useEffect(() => {
+    const userItem = localStorage.getItem("user");
+    if (userItem) {
+      const parsedUser = JSON.parse(userItem);
+      setCurrentUser({ username: parsedUser.username, address: parsedUser.address });
+    }
+  }, []);
 
   useEffect(() => {
     if (!comments) {
@@ -55,27 +69,35 @@ export default function SwarmCommentList({
     }
 
     // Loads reactions for each of the comments
-    const loadReactionsForComments = async (commentId: string, address?: string): Promise<void> => {
+    const loadReactionsForComments = async (address?: string): Promise<void> => {
       try {
-        const identifier = getReactionFeedId(commentId).toString();
-        const latestReactions = await readLatestReactions(undefined, identifier, address, beeApiUrl);
+        const latestReactions = await readReactionsState(nextIndex, reactionFeedId, address, beeApiUrl);
 
         if (latestReactions) {
-          setReactionsPerComments(prev => prev.set(commentId, latestReactions));
+          setNextIndex(new FeedIndex(latestReactions.nextIndex));
+
+          for (const comment of comments) {
+            const commentId = comment.message.messageId;
+            if (!commentId) {
+              console.debug("Comment ID is missing, skipping reaction loading for this comment.");
+              continue;
+            }
+
+            const foundReactions = latestReactions.reactions.filter(r => r.targetMessageId === commentId);
+            if (foundReactions.length > 0) {
+              setReactionsPerComments(prev => prev.set(commentId, foundReactions));
+              console.debug(`Loaded reactions for comment ID ${commentId}`);
+            }
+          }
         }
-        console.debug(`Loaded reactions for comment ID ${commentId}`);
       } catch (err) {
-        console.error(`Loading for comment ID ${commentId} error: ${err}`);
+        console.error(`Loading reactions error: ${err}`);
       }
     };
 
     const waitForReactions = async (): Promise<void> => {
       setLoadReactions(true);
-      for (const comment of comments) {
-        if (comment.message.messageId) {
-          await loadReactionsForComments(comment.message.messageId, signer?.publicKey().address().toString());
-        }
-      }
+      await loadReactionsForComments(signer?.publicKey().address().toString());
       setLoadReactions(false);
     };
     waitForReactions();
@@ -106,39 +128,37 @@ export default function SwarmCommentList({
     const reactions = reactionsPerComments.get(commentId);
     if (!reactions) return [];
 
-    return reactions.reactions.filter(r => r.reactionType === reactionType);
+    return reactions.filter(r => r.reactionType === reactionType);
   };
 
   const handleOnClick = async (reactionType: ReactionType, comment: UserComment): Promise<void> => {
-    const userItem = localStorage.getItem("user");
-    let user: User | undefined;
-    if (userItem) {
-      const parsedUser = JSON.parse(userItem);
-      user = { username: parsedUser.username, address: parsedUser.address };
-    }
-    if (!user) {
+    if (!currentUser) {
       console.error("User not found");
       return;
     }
 
-    if (sendingReaction) return;
+    if (sendingReaction) {
+      console.debug("Already sending a reaction");
+      return;
+    }
 
     const messageId = comment.message.messageId;
-    if (!messageId) return;
+    if (!messageId) {
+      console.debug("Message ID is missing");
+      return;
+    }
 
-    const reactions = reactionsPerComments.get(messageId) || {
-      reactions: [],
-      nextIndex: FeedIndex.fromBigInt(0n).toString(),
-    };
-
-    const existingReaction = reactions.reactions.find(
-      (r: Reaction) => r.reactionType === reactionType && r.user.address === user?.address,
+    const reactionsOfComment = reactionsPerComments.get(messageId) || [];
+    // TODO: rework update logic
+    const existingReaction = reactionsOfComment.filter(
+      r =>
+        r.reactionType === reactionType && r.user.address === currentUser?.address && r.targetMessageId === messageId,
     );
     const action = existingReaction ? Action.REMOVE : Action.ADD;
     const newReactions = updateReactions(
-      reactions.reactions,
+      reactionsOfComment,
       {
-        user,
+        user: currentUser,
         targetMessageId: messageId,
         timestamp: Date.now(),
         reactionType,
@@ -147,26 +167,22 @@ export default function SwarmCommentList({
     );
 
     if (newReactions === undefined) {
-      console.debug("reactions not changed");
+      console.debug("Reactions did not change");
       return;
     }
 
-    const nextIndex = new FeedIndex(reactions.nextIndex);
-    const identifier = getReactionFeedId(messageId).toString();
     setSendingReaction(true);
     await writeReactionsToIndex(newReactions, nextIndex, {
-      identifier,
+      identifier: reactionFeedId,
       beeApiUrl,
       signer,
       stamp,
     });
-    setReactionsPerComments(prev =>
-      prev.set(messageId, {
-        reactions: newReactions,
-        nextIndex: FeedIndex.fromBigInt(nextIndex.toBigInt() + 1n).toString(),
-      }),
-    );
     setSendingReaction(false);
+
+    const newIndex = nextIndex === undefined ? 0n : nextIndex.toBigInt() + 1n;
+    setReactionsPerComments(prev => prev.set(messageId, newReactions));
+    setNextIndex(FeedIndex.fromBigInt(newIndex));
   };
 
   return (
