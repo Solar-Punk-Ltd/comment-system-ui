@@ -1,5 +1,6 @@
 import React, { useState } from "react";
-import { Comment, UserComment } from "@solarpunkltd/comment-system";
+import { Comment, UserComment } from "../../../../utils/legacy.model";
+
 import clsx from "clsx";
 
 import { createMonogram, formatTime } from "../../../../utils/helpers";

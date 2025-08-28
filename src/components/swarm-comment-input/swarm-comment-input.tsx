@@ -1,6 +1,5 @@
-// import React, { useState, useRef, ChangeEvent, useEffect } from "react";
 import React, { ChangeEvent, useState } from "react";
-import { Comment, UserComment } from "@solarpunkltd/comment-system";
+import { Comment, UserComment } from "../../utils/legacy.model";
 
 import { MAX_CHARACTER_COUNT } from "../../utils/constants";
 import SendIcon from "../icons/SendIcon/SendIcon";

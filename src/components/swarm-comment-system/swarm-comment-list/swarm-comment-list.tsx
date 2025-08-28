@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from "react";
-import { UserComment } from "@solarpunkltd/comment-system";
+import { UserComment } from "../../../utils/legacy.model";
 
 import SwarmComment, { SwarmCommentWithFlags } from "./swarm-comment/swarm-comment";
 

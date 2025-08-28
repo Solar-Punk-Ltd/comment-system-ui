@@ -1,17 +1,16 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Bee, Signer, Topic, Utils } from "@ethersphere/bee-js";
-import {
-  Comment,
-  CommentsWithIndex,
-  readCommentsInRange,
-  readSingleComment,
-  UserComment,
-  writeCommentToIndex,
-} from "@solarpunkltd/comment-system";
+import { FeedIndex, PrivateKey, Topic } from "@ethersphere/bee-js";
+import { readCommentsInRange, readSingleComment, writeCommentToIndex } from "@solarpunkltd/comment-system";
+import { Comment, CommentsWithIndex, UserComment } from "../../utils/legacy.model";
 
 import { loadLatestComments, loadNextComments } from "../../utils/comments";
-import { DEFAULT_NUM_OF_COMMENTS, ETH_ADDRESS_LENGTH, THREE_SECONDS } from "../../utils/constants";
-import { isEmpty } from "../../utils/helpers";
+import { DEFAULT_NUM_OF_COMMENTS, THREE_SECONDS } from "../../utils/constants";
+import {
+  assertAndTransformData,
+  isEmpty,
+  transformToLegacyComment,
+  transformToLegacySingleComment,
+} from "../../utils/helpers";
 import SwarmCommentInput from "../swarm-comment-input/swarm-comment-input";
 
 import { SwarmCommentWithFlags } from "./swarm-comment-list/swarm-comment/swarm-comment";
@@ -38,7 +37,7 @@ export interface SwarmCommentSystemProps {
   /**
    * A Signer instance that can sign data.
    */
-  signer: Signer;
+  signer: PrivateKey;
   /**
    * Nickname of the user.
    */
@@ -87,14 +86,13 @@ export const SwarmCommentSystem: React.FC<SwarmCommentSystemProps> = ({
   onComment,
   onRead,
 }) => {
-  const bee = new Bee(beeApiUrl);
-  const topicHex: Topic = bee.makeFeedTopic(topic);
+  const topicHex = Topic.fromString(topic).toString();
   const [comments, setComments] = useState<SwarmCommentWithFlags[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
 
-  const approvedFeedAddress = Utils.makeHexString(signer.address, ETH_ADDRESS_LENGTH);
-  const nextRef = useRef<number | undefined>();
-  const sendingRef = useRef<boolean | undefined>();
+  const approvedFeedAddress = signer.publicKey().address().toString();
+  const nextRef = useRef<number | undefined>(undefined);
+  const sendingRef = useRef<boolean | undefined>(undefined);
   const commentsToRead = numOfComments || DEFAULT_NUM_OF_COMMENTS;
 
   useEffect(() => {
@@ -236,7 +234,14 @@ export const SwarmCommentSystem: React.FC<SwarmCommentSystemProps> = ({
         username: comment.username,
       };
       sendingRef.current = true;
-      const newComment = await writeCommentToIndex(plainCommentReq, expNextIx, {
+      const msgData = assertAndTransformData(
+        plainCommentReq,
+        approvedFeedAddress,
+        FeedIndex.fromBigInt(BigInt(expNextIx)),
+        topicHex,
+      );
+
+      const newComment = await writeCommentToIndex(msgData, FeedIndex.fromBigInt(BigInt(expNextIx)), {
         stamp,
         identifier: topicHex,
         signer,
@@ -248,23 +253,25 @@ export const SwarmCommentSystem: React.FC<SwarmCommentSystemProps> = ({
       }
       // need to check if the comment was written successfully to the expected index
       // nexitIx will be undefined if startIx is defined
-      const commentCheck = await readSingleComment(expNextIx, {
+      const commentCheck = await readSingleComment(FeedIndex.fromBigInt(BigInt(expNextIx)), {
         identifier: topicHex,
         beeApiUrl: beeApiUrl,
-        approvedFeedAddress: approvedFeedAddress,
+        address: approvedFeedAddress,
       });
+      const legacyCommentCheck = transformToLegacySingleComment(commentCheck);
+
       if (
-        !commentCheck ||
-        commentCheck.comment.message.text !== comment.message.text ||
-        commentCheck.comment.timestamp !== comment.timestamp
+        !legacyCommentCheck ||
+        legacyCommentCheck.comment.message.text !== comment.message.text ||
+        legacyCommentCheck.comment.timestamp !== comment.timestamp
       ) {
         // if another comment is found at the expected index then updateNextCommentsCb shall find it and update the list
-        throw `comment check failed, expected "${comment.message.text}", got: "${commentCheck.comment.message.text}".
-                Expected timestamp: ${comment.timestamp}, got: ${commentCheck.comment.timestamp}`;
+        throw `comment check failed, expected "${comment.message.text}", got: "${legacyCommentCheck.comment.message.text}".
+                Expected timestamp: ${comment.timestamp}, got: ${legacyCommentCheck.comment.timestamp}`;
       }
       console.log(`Writing a new comment to index ${expNextIx} was successful: `, newComment);
       // use filter flag set by AI, only available if reading back was successful
-      comment.message.flagged = commentCheck.comment.message.flagged;
+      comment.message.flagged = legacyCommentCheck.comment.message.flagged;
 
       if (comment.error === true) {
         onResend(comment);
@@ -274,7 +281,7 @@ export const SwarmCommentSystem: React.FC<SwarmCommentSystemProps> = ({
       nextRef.current = expNextIx + 1;
       sendingRef.current = false;
       if (onComment) {
-        onComment(newComment, expNextIx + 1);
+        onComment(legacyCommentCheck.comment, expNextIx + 1);
       }
     } catch (err) {
       onFailure(comment);
@@ -291,17 +298,24 @@ export const SwarmCommentSystem: React.FC<SwarmCommentSystemProps> = ({
         const newStartIx = currentStartIx > DEFAULT_NUM_OF_COMMENTS ? currentStartIx - DEFAULT_NUM_OF_COMMENTS + 1 : 0;
 
         try {
-          const prevComments = await readCommentsInRange(newStartIx, currentStartIx, {
-            identifier: topicHex,
-            beeApiUrl: beeApiUrl,
-            approvedFeedAddress: approvedFeedAddress,
-          });
-          console.log(`Loaded ${prevComments.length} previous comments from history`);
-          setComments([...prevComments, ...comments]);
+          const prevComments = await readCommentsInRange(
+            FeedIndex.fromBigInt(BigInt(newStartIx)),
+            FeedIndex.fromBigInt(BigInt(currentStartIx)),
+            {
+              identifier: topicHex,
+              beeApiUrl: beeApiUrl,
+              address: approvedFeedAddress,
+            },
+          );
+
+          const legacyComments = prevComments ? prevComments.map(c => transformToLegacyComment(c)) : [];
+          console.log(`Loaded ${legacyComments.length} previous comments from history`);
+
+          setComments([...legacyComments, ...comments]);
           if (onRead) {
-            onRead(prevComments, true, nextRef.current);
+            onRead(legacyComments, true, nextRef.current);
           }
-          return prevComments;
+          return legacyComments;
         } catch (err) {
           console.error("Loading comment history error: ", err);
         }
