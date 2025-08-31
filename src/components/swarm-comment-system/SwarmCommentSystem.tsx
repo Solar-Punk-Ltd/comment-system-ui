@@ -4,7 +4,7 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 
 import { loadLatestComments, loadNextComments, verifyWriteSuccess } from "../../utils/comments";
 import { DEFAULT_NUM_OF_COMMENTS, THREE_SECONDS } from "../../utils/constants";
-import { isEmpty, safeConvertIndex } from "../../utils/helpers";
+import { safeConvertIndex } from "../../utils/helpers";
 import SwarmCommentInput from "../swarm-comment-input/swarm-comment-input";
 
 import { SwarmCommentWithFlags } from "./swarm-comment-list/swarm-comment/swarm-comment";
@@ -96,9 +96,10 @@ export const SwarmCommentSystem: React.FC<SwarmCommentSystemProps> = ({
 
       const newComments = await loadLatestComments(topic, approvedFeedAddress, beeApiUrl, commentsToRead);
 
-      const nextIx = safeConvertIndex(newComments[newComments.length - 1].index);
-      if (!isEmpty(newComments)) {
+      let nextIx: bigint | undefined;
+      if (newComments.length > 0) {
         setComments(newComments);
+        nextIx = safeConvertIndex(newComments[newComments.length - 1].index);
         nextRef.current = nextIx;
         console.log(`Loaded ${newComments.length} comments of topic ${topic}`);
       }
@@ -116,7 +117,9 @@ export const SwarmCommentSystem: React.FC<SwarmCommentSystemProps> = ({
 
       console.log(`Preloaded ${preloadedComments.length} comments of topic: ${topic}`);
       setComments(preloadedComments);
-      nextRef.current = safeConvertIndex(preloadedComments[preloadedComments.length - 1].index);
+      if (preloadedComments.length > 0) {
+        nextRef.current = safeConvertIndex(preloadedComments[preloadedComments.length - 1].index);
+      }
 
       setLoading(false);
       sendingRef.current = false;
@@ -141,15 +144,13 @@ export const SwarmCommentSystem: React.FC<SwarmCommentSystemProps> = ({
         DEFAULT_NUM_OF_COMMENTS,
       );
 
+      if (sendingRef.current && newComments.length === 0) {
+        return;
+      }
+
       const nextIx = safeConvertIndex(newComments[newComments.length - 1].index);
 
-      if (
-        !sendingRef.current &&
-        !isEmpty(newComments) &&
-        nextRef.current !== undefined &&
-        nextIx &&
-        nextIx > nextRef.current
-      ) {
+      if (nextRef.current !== undefined && nextIx && nextIx > nextRef.current) {
         // sometimes commentcheck fails and right after the failure the comment arrives, probably due to kademlia propagation, removes duplicates
         setComments(prevComments => {
           for (const nc of newComments) {
