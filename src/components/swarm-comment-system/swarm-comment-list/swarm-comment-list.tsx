@@ -1,5 +1,5 @@
+import { MessageData } from "@solarpunkltd/comment-system";
 import React, { useCallback, useEffect, useState } from "react";
-import { UserComment } from "../../../utils/legacy.model";
 
 import SwarmComment, { SwarmCommentWithFlags } from "./swarm-comment/swarm-comment";
 
@@ -10,7 +10,7 @@ interface SwarmCommentListProps {
   loading: boolean;
   filterEnabled?: boolean;
   resend?: (comment: SwarmCommentWithFlags) => Promise<void>;
-  loadHistory?: () => Promise<UserComment[]>;
+  loadHistory?: () => Promise<MessageData[]>;
 }
 
 const SwarmCommentList: React.FC<SwarmCommentListProps> = ({
@@ -109,11 +109,11 @@ const SwarmCommentList: React.FC<SwarmCommentListProps> = ({
     if (filterEnabled) {
       const actualUser = localStorage.getItem("username") || "";
       return comments.filter(c => {
-        if (c.username === actualUser && c.message.flagged === true) {
-          c.message.text = "Potentially infringing content hidden by USCVS!";
+        if (c.username === actualUser && c.flagged === true) {
+          c.message = "Potentially infringing content hidden by USCVS!";
           c.ownFilterFlag = true;
         }
-        return c.message.flagged !== true || c.ownFilterFlag;
+        return c.flagged !== true || c.ownFilterFlag;
       });
     }
     return comments;
@@ -123,8 +123,13 @@ const SwarmCommentList: React.FC<SwarmCommentListProps> = ({
     <div ref={handleDivCb} className="swarm-comment-system-comment-list">
       {filteredComments().map((c, ix) => (
         <SwarmComment
-          key={c.message.messageId || ix}
-          message={{ text: c.message.text }}
+          key={c.id || ix}
+          id={c.id}
+          type={c.type}
+          address={c.address}
+          index={c.index}
+          topic={c.topic}
+          message={c.message}
           username={c.username}
           timestamp={c.timestamp}
           error={c.error}

@@ -3,17 +3,22 @@
     "outDir": "dist",
     "target": "ES2020",
     "useDefineForClassFields": true,
-    "lib": ["ES2020", "DOM", "DOM.Iterable"],
+    "lib": [
+      "ES2020",
+      "DOM",
+      "DOM.Iterable"
+    ],
     "module": "esnext",
     "skipLibCheck": true,
     "moduleResolution": "Node",
     "resolveJsonModule": true,
-    "types": ["node"],
+    "types": [
+      "node"
+    ],
     "declaration": true,
     "declarationMap": true,
     "isolatedModules": true,
     "jsx": "react-jsx",
-    "declarationDir": "./dist/types",
     "sourceMap": true,
     "strict": true,
     "alwaysStrict": true,
@@ -24,12 +29,22 @@
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,
     "noImplicitAny": true,
-    "typeRoots": ["src/@types", "node_modules/@types"],
+    "typeRoots": [
+      "src/@types",
+      "node_modules/@types"
+    ],
     "noImplicitReturns": true,
     "paths": {
-      "@components/*": ["./src/components/*"]
+      "@components/*": [
+        "./src/components/*"
+      ]
     }
   },
-  "include": ["src"],
-  "exclude": ["node_modules", "dist"],
+  "include": [
+    "src"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist"
+  ],
 }

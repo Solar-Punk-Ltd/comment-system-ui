@@ -1,7 +1,6 @@
-import React, { useState } from "react";
-import { Comment, UserComment } from "../../../../utils/legacy.model";
-
+import { MessageData } from "@solarpunkltd/comment-system";
 import clsx from "clsx";
+import React, { useState } from "react";
 
 import { createMonogram, formatTime } from "../../../../utils/helpers";
 import AvatarMonogram from "../../../icons/AvatarMonogram/AvatarMonogram";
@@ -9,35 +8,31 @@ import TryAgainIcon from "../../../icons/TryAgainIcon/TryAgainIcon";
 
 import "./swarm-comment.scss";
 
-export interface SwarmCommentWithFlags extends UserComment {
+export interface SwarmCommentWithFlags extends MessageData {
   error?: boolean;
   ownFilterFlag?: boolean;
   resend?: (comment: SwarmCommentWithFlags) => Promise<void>;
 }
 
-const SwarmComment: React.FC<SwarmCommentWithFlags> = ({ message: { text }, username, error, timestamp, resend }) => {
-  const [errorFlag, setErrorFlag] = useState<boolean | undefined>(error);
+const SwarmComment: React.FC<SwarmCommentWithFlags> = (msg: SwarmCommentWithFlags) => {
+  const [errorFlag, setErrorFlag] = useState<boolean | undefined>(msg.error);
   const [sending, setSending] = useState<boolean>(false);
   const actualUser = localStorage.getItem("username");
 
   const resendComment = async () => {
-    if (!resend) {
+    if (!msg.resend) {
       return;
     }
-    const commentObj: Comment = {
-      text: text,
-    };
-
-    const userCommentObj: SwarmCommentWithFlags = {
-      message: commentObj,
-      timestamp: Date.now(),
-      username: username,
-      error: errorFlag,
-    };
 
     setSending(true);
+
     try {
-      await resend(userCommentObj);
+      await msg.resend({
+        ...msg,
+        timestamp: Date.now(),
+        username: msg.username,
+        error: errorFlag,
+      });
       setErrorFlag(false);
     } catch (err) {
       setErrorFlag(true);
@@ -48,36 +43,36 @@ const SwarmComment: React.FC<SwarmCommentWithFlags> = ({ message: { text }, user
   };
 
   return (
-    <div className={clsx("swarm-comment", { own: username === actualUser })}>
+    <div className={clsx("swarm-comment", { own: msg.username === actualUser })}>
       <div className="swarm-comment__avatar-side">
         <AvatarMonogram
-          letters={createMonogram(username)}
-          color={errorFlag ? "white" : username === actualUser ? "#333333" : "#4A2875"}
-          backgroundColor={errorFlag ? "#C85050" : username === actualUser ? "#4A287533" : "#F7F8FA"}
+          letters={createMonogram(msg.username)}
+          color={errorFlag ? "white" : msg.username === actualUser ? "#333333" : "#4A2875"}
+          backgroundColor={errorFlag ? "#C85050" : msg.username === actualUser ? "#4A287533" : "#F7F8FA"}
         />
       </div>
 
       <div className="swarm-comment__message-side">
         <div
           className={clsx("swarm-comment__message-side__name", {
-            own: username === actualUser,
+            own: msg.username === actualUser,
             error: errorFlag,
           })}
         >
           <div className="swarm-comment__message-side__name__username-and-time">
-            {username} &nbsp;
-            <div className="swarm-comment__right-side__name-and-time__time">{formatTime(timestamp)}</div>
+            {msg.username} &nbsp;
+            <div className="swarm-comment__right-side__name-and-time__time">{formatTime(msg.timestamp)}</div>
           </div>
         </div>
 
         <div
           className={clsx({
             "swarm-comment__message-side__text__error": errorFlag,
-            "swarm-comment__message-side__text": !errorFlag && username !== actualUser,
-            "swarm-comment__message-side__text own": !errorFlag && username === actualUser,
+            "swarm-comment__message-side__text": !errorFlag && msg.username !== actualUser,
+            "swarm-comment__message-side__text own": !errorFlag && msg.username === actualUser,
           })}
         >
-          {text}
+          {msg.message}
         </div>
         {errorFlag && (
           <div className="swarm-comment-message-side__try-again__wrapper">
