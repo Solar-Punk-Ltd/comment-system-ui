@@ -35,7 +35,6 @@ const SwarmCommentInput: React.FC<SwarmCommentInputProps> = ({
   const handleOnChange = (e: ChangeEvent<HTMLInputElement>) => {
     const maxCharCount = maxCharacterCount || MAX_CHARACTER_COUNT;
     if (e.target.value.length > maxCharCount) {
-      console.log("max comment length reached: ", maxCharCount);
       return;
     }
     setCommentToSend(e.target.value);

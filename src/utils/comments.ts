@@ -23,7 +23,7 @@ export const loadLatestComments = async (
     }
 
     // if there is only one comment, return it
-    if (latestIx === 1n) {
+    if (latestIx === 0n) {
       return [latestComment];
     }
 

@@ -96,16 +96,15 @@ export const SwarmCommentSystem: React.FC<SwarmCommentSystemProps> = ({
 
       const newComments = await loadLatestComments(topic, approvedFeedAddress, beeApiUrl, commentsToRead);
 
-      let nextIx: bigint | undefined;
       if (newComments.length > 0) {
         setComments(newComments);
-        nextIx = safeConvertIndex(newComments[newComments.length - 1].index);
-        nextRef.current = nextIx;
-        console.log(`Loaded ${newComments.length} comments of topic ${topic}`);
+        const tmpNext = safeConvertIndex(newComments[newComments.length - 1].index);
+        nextRef.current = tmpNext !== undefined ? tmpNext + 1n : 0n;
+        console.debug(`Loaded ${newComments.length} comments of topic ${topic}`);
       }
       // return the newly read comments and the next index to the parent component
       if (onRead) {
-        onRead(newComments, false, nextIx);
+        onRead(newComments, false, nextRef.current);
       }
 
       setLoading(false);
@@ -115,10 +114,11 @@ export const SwarmCommentSystem: React.FC<SwarmCommentSystemProps> = ({
     if (preloadedComments) {
       setLoading(true);
 
-      console.log(`Preloaded ${preloadedComments.length} comments of topic: ${topic}`);
+      console.debug(`Preloaded ${preloadedComments.length} comments of topic: ${topic}`);
       setComments(preloadedComments);
       if (preloadedComments.length > 0) {
-        nextRef.current = safeConvertIndex(preloadedComments[preloadedComments.length - 1].index);
+        const tmpNext = safeConvertIndex(preloadedComments[preloadedComments.length - 1].index);
+        nextRef.current = tmpNext !== undefined ? tmpNext + 1n : 0n;
       }
 
       setLoading(false);
@@ -144,7 +144,7 @@ export const SwarmCommentSystem: React.FC<SwarmCommentSystemProps> = ({
         DEFAULT_NUM_OF_COMMENTS,
       );
 
-      if (sendingRef.current && newComments.length === 0) {
+      if (sendingRef.current || newComments.length === 0) {
         return;
       }
 
@@ -168,7 +168,7 @@ export const SwarmCommentSystem: React.FC<SwarmCommentSystemProps> = ({
           onRead(newComments, false, nextIx);
         }
 
-        console.log(`${newComments.length} new comments arrived, next index: ${nextIx}`);
+        console.debug(`${newComments.length} new comments arrived, next index: ${nextIx}`);
       }
     } catch (err) {
       console.error("Fetching new comments error: ", err);
@@ -190,7 +190,7 @@ export const SwarmCommentSystem: React.FC<SwarmCommentSystemProps> = ({
   const onResend = (comment: SwarmCommentWithFlags) => {
     const foundIX = comments.findIndex(c => c.error && c.message === comment.message && c.id === comment.id);
     if (foundIX > -1) {
-      console.log(`Removing failed comment at index: ${foundIX}`);
+      console.debug(`Removing failed comment at index: ${foundIX}`);
       const tmpComments = [...comments];
       tmpComments.splice(foundIX, 1);
       tmpComments.push({
@@ -251,7 +251,7 @@ export const SwarmCommentSystem: React.FC<SwarmCommentSystemProps> = ({
         msgData,
       );
 
-      console.log(`Writing a new comment to index ${expNextIx} was successful: `, newComment);
+      console.debug(`Writing a new comment to index ${expNextIx} was successful`);
       // use filter flag set by AI, only available if reading back was successful
       comment.flagged = commentCheck.flagged;
 
@@ -295,7 +295,7 @@ export const SwarmCommentSystem: React.FC<SwarmCommentSystemProps> = ({
             return [];
           }
 
-          console.log(`Loaded ${prevComments.length} previous comments from history`);
+          console.debug(`Loaded ${prevComments.length} previous comments from history`);
 
           setComments([...prevComments, ...comments]);
           if (onRead) {
