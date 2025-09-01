@@ -1,59 +1,44 @@
-import { Bee, Topic } from "@ethersphere/bee-js";
-import { CommentsWithIndex, readCommentsInRange, readSingleComment, SingleComment } from "@solarpunkltd/comment-system";
+import { FeedIndex, Topic, UploadResult } from "@ethersphere/bee-js";
+import { MessageData, readCommentsInRange, readSingleComment } from "@solarpunkltd/comment-system";
 
-import { isEmpty } from "./helpers";
-
-export const readLatestComment = async (topic: string, address: string, beeApiUrl: string): Promise<SingleComment> => {
-  try {
-    const bee = new Bee(beeApiUrl);
-    const topicHex: Topic = bee.makeFeedTopic(topic);
-    return await readSingleComment(undefined, {
-      identifier: topicHex,
-      beeApiUrl: beeApiUrl,
-      approvedFeedAddress: address,
-    });
-  } catch (err) {
-    console.error(`Loading the latest comment of topic ${topic} error: ${err}`);
-    return {} as SingleComment;
-  }
-};
+import { safeConvertIndex } from "./helpers";
 
 export const loadLatestComments = async (
   topic: string,
   address: string,
   beeApiUrl: string,
-  numOfComments: number,
-): Promise<CommentsWithIndex> => {
+  numOfComments: bigint,
+): Promise<MessageData[]> => {
   try {
-    const latestComment = await readLatestComment(topic, address, beeApiUrl);
-    if (isEmpty(latestComment) || latestComment.nextIndex === undefined || latestComment.nextIndex === 0) {
-      return {} as CommentsWithIndex;
-    }
-    // if there is only one comment, return it
-    if (latestComment.nextIndex === 1) {
-      return {
-        comments: [latestComment.comment],
-        nextIndex: latestComment.nextIndex,
-      } as CommentsWithIndex;
+    const topicHex = Topic.fromString(topic).toString();
+    const latestComment = await readSingleComment(undefined, {
+      identifier: topicHex,
+      beeApiUrl,
+      address,
+    });
+
+    const latestIx = safeConvertIndex(latestComment?.index);
+    if (!latestComment || latestIx === undefined) {
+      return [];
     }
 
-    const bee = new Bee(beeApiUrl);
-    const topicHex: Topic = bee.makeFeedTopic(topic);
-    // the latest comment is already fetched
-    const endIx = latestComment.nextIndex - 2;
-    const startIx = endIx > numOfComments ? endIx - numOfComments + 1 : 0;
-    const comments = await readCommentsInRange(startIx, endIx, {
+    // if there is only one comment, return it
+    if (latestIx === 0n) {
+      return [latestComment];
+    }
+
+    const endIx = latestIx - 1n;
+    const startIx = endIx > numOfComments ? endIx - numOfComments + 1n : 0n;
+    const comments = await readCommentsInRange(FeedIndex.fromBigInt(startIx), FeedIndex.fromBigInt(endIx), {
       identifier: topicHex,
-      beeApiUrl: beeApiUrl,
-      approvedFeedAddress: address,
+      beeApiUrl,
+      address,
     });
-    return {
-      comments: [...comments, latestComment.comment],
-      nextIndex: latestComment.nextIndex,
-    } as CommentsWithIndex;
+
+    return [...(comments || []), latestComment];
   } catch (err) {
     console.error(`Loading the last ${numOfComments} comments of topic ${topic} error: ${err}`);
-    return {} as CommentsWithIndex;
+    return [];
   }
 };
 
@@ -61,48 +46,77 @@ export const loadNextComments = async (
   topic: string,
   address: string,
   beeApiUrl: string,
-  nextIx: number,
-  numOfComments: number,
-): Promise<CommentsWithIndex> => {
+  nextIx: bigint,
+  numOfComments: bigint,
+): Promise<MessageData[]> => {
   try {
-    const latestComment = await readLatestComment(topic, address, beeApiUrl);
-    if (
-      isEmpty(latestComment) ||
-      latestComment.nextIndex === undefined ||
-      latestComment.nextIndex === 0 ||
-      latestComment.nextIndex <= nextIx
-    ) {
-      return {} as CommentsWithIndex;
-    }
-    // if there is only one comment, return it
-    if (latestComment.nextIndex - nextIx === 1) {
-      return {
-        comments: [latestComment.comment],
-        nextIndex: latestComment.nextIndex,
-      } as CommentsWithIndex;
-    }
-
-    const startIx = nextIx === undefined ? 0 : nextIx;
-    const bee = new Bee(beeApiUrl);
-    const topicHex: Topic = bee.makeFeedTopic(topic);
-    let endIx = startIx + numOfComments - 1;
-    // read until the end of the list or until numOfComments is read
-    if (endIx >= latestComment.nextIndex) {
-      endIx = latestComment.nextIndex - 2;
-    }
-
-    const comments = await readCommentsInRange(startIx, endIx, {
+    const topicHex = Topic.fromString(topic).toString();
+    const latestComment = await readSingleComment(undefined, {
       identifier: topicHex,
-      beeApiUrl: beeApiUrl,
-      approvedFeedAddress: address,
+      beeApiUrl,
+      address,
     });
+
+    const latestIx = safeConvertIndex(latestComment?.index);
+    if (!latestComment || latestIx === undefined || latestIx <= nextIx) {
+      return [];
+    }
+
+    if (latestIx - nextIx === 1n) {
+      return [latestComment];
+    }
+
+    const startIx = nextIx === undefined ? 0n : nextIx;
+    let endIx = startIx + numOfComments - 1n;
+    // read until the end of the list or until numOfComments is read
+    if (endIx >= latestIx) {
+      endIx = latestIx - 1n;
+    }
+
+    const comments = await readCommentsInRange(FeedIndex.fromBigInt(startIx), FeedIndex.fromBigInt(endIx), {
+      identifier: topicHex,
+      beeApiUrl,
+      address,
+    });
+
     // the latest comment is already fetched
-    return {
-      comments: [...comments, latestComment.comment],
-      nextIndex: endIx + 1,
-    } as CommentsWithIndex;
+    return [...(comments || []), latestComment];
   } catch (err) {
-    `Loading the next ${numOfComments} comments of topic ${topic} error: ${err}`;
-    return {} as CommentsWithIndex;
+    console.error(`Loading the next ${numOfComments} comments of topic ${topic} error: ${err}`);
+    return [];
   }
+};
+
+export const verifyWriteSuccess = async (
+  topicHex: string,
+  address: string,
+  beeApiUrl: string,
+  index: FeedIndex,
+  writeResult: UploadResult | undefined,
+  data?: MessageData,
+): Promise<MessageData> => {
+  if (!writeResult) {
+    throw new Error("Write failed, empty response!");
+  }
+
+  if (!data) {
+    throw new Error("Comment write failed, empty response!");
+  }
+
+  const dataCheck = await readSingleComment(index, {
+    identifier: topicHex,
+    beeApiUrl,
+    address,
+  });
+
+  if (!dataCheck) {
+    throw new Error("Comment check failed, empty response!");
+  }
+
+  if (dataCheck.id !== data.id || dataCheck.timestamp !== data.timestamp) {
+    throw new Error(`Write verification failed, expected "${data.message}", got: "${dataCheck.message}".
+                Expected timestamp: ${data.timestamp}, got: ${dataCheck.timestamp}`);
+  }
+
+  return dataCheck;
 };
