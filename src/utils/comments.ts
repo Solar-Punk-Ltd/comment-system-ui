@@ -58,15 +58,15 @@ export const loadNextComments = async (
     });
 
     const latestIx = safeConvertIndex(latestComment?.index);
-    if (!latestComment || latestIx === undefined || latestIx <= nextIx) {
+    if (!latestComment || latestIx === undefined || latestIx < nextIx) {
       return [];
     }
 
-    if (latestIx - nextIx === 1n) {
+    if (latestIx === nextIx) {
       return [latestComment];
     }
 
-    const startIx = nextIx === undefined ? 0n : nextIx;
+    const startIx = nextIx;
     let endIx = startIx + numOfComments - 1n;
     // read until the end of the list or until numOfComments is read
     if (endIx >= latestIx) {
