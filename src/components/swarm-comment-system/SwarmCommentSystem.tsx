@@ -148,9 +148,9 @@ export const SwarmCommentSystem: React.FC<SwarmCommentSystemProps> = ({
         return;
       }
 
-      const nextIx = safeConvertIndex(newComments[newComments.length - 1].index);
+      const latestIx = safeConvertIndex(newComments[newComments.length - 1].index);
 
-      if (nextRef.current !== undefined && nextIx && nextIx > nextRef.current) {
+      if (nextRef.current !== undefined && latestIx && latestIx >= nextRef.current) {
         // sometimes commentcheck fails and right after the failure the comment arrives, probably due to kademlia propagation, removes duplicates
         setComments(prevComments => {
           for (const nc of newComments) {
@@ -162,13 +162,13 @@ export const SwarmCommentSystem: React.FC<SwarmCommentSystemProps> = ({
           return [...prevComments].concat(newComments);
         });
 
-        nextRef.current = nextIx;
+        nextRef.current = latestIx + 1n;
 
         if (onRead) {
-          onRead(newComments, false, nextIx);
+          onRead(newComments, false, nextRef.current);
         }
 
-        console.debug(`${newComments.length} new comments arrived, next index: ${nextIx}`);
+        console.debug(`${newComments.length} new comments arrived, next index: ${nextRef.current}`);
       }
     } catch (err) {
       console.error("Fetching new comments error: ", err);
@@ -179,12 +179,16 @@ export const SwarmCommentSystem: React.FC<SwarmCommentSystemProps> = ({
     if (loading) {
       return;
     }
-    const interval = setInterval(async () => {
+
+    const interval = setInterval(() => {
       loadNextCommentsCb();
     }, THREE_SECONDS);
 
-    return () => clearInterval(interval);
-  }, [loading, loadNextCommentsCb]);
+    return () => {
+      clearInterval(interval);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loading]);
 
   // if resend is succesful then find, remove and push the currently error-flagged comment to the end of the list
   const onResend = (comment: SwarmCommentWithFlags) => {
