@@ -49,6 +49,10 @@ export interface SwarmCommentSystemProps {
    */
   maxCharacterCount?: number;
   /**
+   * Maximum time to wait for new comments (in milliseconds).
+   */
+  pollInterval?: number;
+  /**
    * Enables filtering based on the comment message flag.
    */
   filterEnabled?: boolean;
@@ -76,6 +80,7 @@ export const SwarmCommentSystem: React.FC<SwarmCommentSystemProps> = ({
   preloadedComments,
   numOfComments,
   maxCharacterCount,
+  pollInterval,
   filterEnabled,
   onComment,
   onRead,
@@ -182,7 +187,7 @@ export const SwarmCommentSystem: React.FC<SwarmCommentSystemProps> = ({
 
     const interval = setInterval(() => {
       loadNextCommentsCb();
-    }, THREE_SECONDS);
+    }, pollInterval ?? THREE_SECONDS);
 
     return () => {
       clearInterval(interval);
