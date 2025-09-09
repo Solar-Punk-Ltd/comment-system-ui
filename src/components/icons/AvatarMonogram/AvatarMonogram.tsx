@@ -10,7 +10,7 @@ interface AvatarMonogramProps {
 
 const AvatarMonogram: React.FC<AvatarMonogramProps> = ({ letters, color, backgroundColor }) => {
   return (
-    <div className="avatar-monogram" style={{ color, backgroundColor }}>
+    <div className={`avatar-monogram ${letters.length >= 3 ? "long-name" : ""}`} style={{ color, backgroundColor }}>
       {letters}
     </div>
   );
