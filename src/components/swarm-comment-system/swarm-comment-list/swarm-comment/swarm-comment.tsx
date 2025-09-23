@@ -2,7 +2,7 @@ import { MessageData } from "@solarpunkltd/comment-system";
 import clsx from "clsx";
 import React, { useState } from "react";
 
-import { createMonogram, formatTime } from "../../../../utils/helpers";
+import { createMonogram, createUniqueUsername, formatTime } from "../../../../utils/helpers";
 import AvatarMonogram from "../../../icons/AvatarMonogram/AvatarMonogram";
 import TryAgainIcon from "../../../icons/TryAgainIcon/TryAgainIcon";
 
@@ -14,10 +14,16 @@ export interface SwarmCommentWithFlags extends MessageData {
   resend?: (comment: SwarmCommentWithFlags) => Promise<void>;
 }
 
-const SwarmComment: React.FC<SwarmCommentWithFlags> = (msg: SwarmCommentWithFlags) => {
+interface SwarmCommentProps {
+  actualUser: string;
+  msg: SwarmCommentWithFlags;
+}
+
+const SwarmComment: React.FC<SwarmCommentProps> = ({ actualUser, msg }) => {
   const [errorFlag, setErrorFlag] = useState<boolean | undefined>(msg.error);
   const [sending, setSending] = useState<boolean>(false);
-  const actualUser = localStorage.getItem("username");
+
+  const uniqueUsername = createUniqueUsername(msg.username, msg.address);
 
   const resendComment = async () => {
     if (!msg.resend) {
@@ -60,7 +66,7 @@ const SwarmComment: React.FC<SwarmCommentWithFlags> = (msg: SwarmCommentWithFlag
           })}
         >
           <div className="swarm-comment__message-side__name__username-and-time">
-            {msg.username} &nbsp;
+            {uniqueUsername} &nbsp;
             <div className="swarm-comment__right-side__name-and-time__time">{formatTime(msg.timestamp)}</div>
           </div>
         </div>

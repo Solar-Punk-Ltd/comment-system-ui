@@ -1,4 +1,4 @@
-import { FeedIndex, PrivateKey, Topic } from "@ethersphere/bee-js";
+import { EthAddress, FeedIndex, PrivateKey, Topic } from "@ethersphere/bee-js";
 import { MessageData, readCommentsInRange, writeCommentToIndex } from "@solarpunkltd/comment-system";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 
@@ -37,6 +37,10 @@ export interface SwarmCommentSystemProps {
    */
   username: string;
   /**
+   * Public key of the user.
+   */
+  userKey: string;
+  /**
    * Already loaded comments to display. Does not fetch initial comments if defined.
    */
   preloadedComments?: MessageData[];
@@ -52,10 +56,6 @@ export interface SwarmCommentSystemProps {
    * Maximum time to wait for new comments (in milliseconds).
    */
   pollInterval?: number;
-  /**
-   * Enables filtering based on the comment message flag.
-   */
-  filterEnabled?: boolean;
   /**
    * Callback for write events.
    * @param newComment The new comment that was written.
@@ -77,11 +77,11 @@ export const SwarmCommentSystem: React.FC<SwarmCommentSystemProps> = ({
   beeApiUrl,
   signer,
   username,
+  userKey,
   preloadedComments,
   numOfComments,
   maxCharacterCount,
   pollInterval,
-  filterEnabled,
   onComment,
   onRead,
 }) => {
@@ -90,6 +90,7 @@ export const SwarmCommentSystem: React.FC<SwarmCommentSystemProps> = ({
   const [loading, setLoading] = useState<boolean>(true);
 
   const approvedFeedAddress = signer.publicKey().address().toString();
+  const userAddress = new EthAddress(userKey).toString();
   const nextRef = useRef<bigint | undefined>(undefined);
   const sendingRef = useRef<boolean | undefined>(undefined);
   const commentsToRead = numOfComments ? BigInt(numOfComments) : DEFAULT_NUM_OF_COMMENTS;
@@ -234,7 +235,7 @@ export const SwarmCommentSystem: React.FC<SwarmCommentSystemProps> = ({
         index: FeedIndex.fromBigInt(expNextIx).toString(),
         type: comment.type,
         message: comment.message,
-        address: comment.address,
+        address: userAddress,
         topic: comment.topic,
         targetMessageId: comment.targetMessageId,
         signature: comment.signature,
@@ -323,9 +324,9 @@ export const SwarmCommentSystem: React.FC<SwarmCommentSystemProps> = ({
   return (
     <>
       <SwarmCommentList
+        actualUser={username}
         comments={comments}
         loading={loading}
-        filterEnabled={filterEnabled || false}
         resend={sendComment}
         loadHistory={loadHistory}
       />
@@ -334,7 +335,7 @@ export const SwarmCommentSystem: React.FC<SwarmCommentSystemProps> = ({
           <SwarmCommentInput
             username={username}
             topic={topic}
-            address={approvedFeedAddress}
+            address={userAddress}
             maxCharacterCount={maxCharacterCount}
             onSubmit={sendComment}
           />

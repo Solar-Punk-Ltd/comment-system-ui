@@ -1,4 +1,15 @@
-export const createMonogram = (name: string) => {
+export const createUniqueUsername = (name: string, publicKey: string): string => {
+  const cleanPubKey = publicKey.startsWith("0x") ? publicKey.slice(2) : publicKey;
+
+  const keyIdentifier = cleanPubKey.slice(-6).toLowerCase();
+
+  const part1 = keyIdentifier.slice(0, 3);
+  const part2 = keyIdentifier.slice(3, 6);
+
+  return `${name} ${part1}:${part2}`;
+};
+
+export const createMonogram = (name: string): string => {
   const initials = name.split(" ").map(n => n[0]);
   return initials.join("").toUpperCase();
 };

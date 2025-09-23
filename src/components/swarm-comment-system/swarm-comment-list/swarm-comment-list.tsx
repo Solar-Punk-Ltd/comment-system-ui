@@ -6,20 +6,14 @@ import SwarmComment, { SwarmCommentWithFlags } from "./swarm-comment/swarm-comme
 import "./swarm-comment-list.scss";
 
 interface SwarmCommentListProps {
+  actualUser: string;
   comments: SwarmCommentWithFlags[];
   loading: boolean;
-  filterEnabled?: boolean;
   resend?: (comment: SwarmCommentWithFlags) => Promise<void>;
   loadHistory?: () => Promise<MessageData[]>;
 }
 
-const SwarmCommentList: React.FC<SwarmCommentListProps> = ({
-  comments,
-  loading,
-  filterEnabled,
-  resend,
-  loadHistory,
-}) => {
+const SwarmCommentList: React.FC<SwarmCommentListProps> = ({ actualUser, comments, loading, resend, loadHistory }) => {
   const [autoscroll, setAutoscroll] = useState(true);
   const [isAtTop, setIsAtTop] = useState(false);
   const [loadingHistory, setLoadingHistory] = useState(false);
@@ -105,35 +99,16 @@ const SwarmCommentList: React.FC<SwarmCommentListProps> = ({
     );
   }
 
-  const filteredComments = () => {
-    if (filterEnabled) {
-      const actualUser = localStorage.getItem("username") || "";
-      return comments.filter(c => {
-        if (c.username === actualUser && c.flagged === true) {
-          c.message = "Potentially infringing content hidden by USCVS!";
-          c.ownFilterFlag = true;
-        }
-        return c.flagged !== true || c.ownFilterFlag;
-      });
-    }
-    return comments;
-  };
-
   return (
     <div ref={handleDivCb} className="swarm-comment-system-comment-list">
-      {filteredComments().map((c, ix) => (
+      {comments.map((c, ix) => (
         <SwarmComment
-          key={c.id || ix}
-          id={c.id}
-          type={c.type}
-          address={c.address}
-          index={c.index}
-          topic={c.topic}
-          message={c.message}
-          username={c.username}
-          timestamp={c.timestamp}
-          error={c.error}
-          resend={resend}
+          key={c?.id + String(ix)}
+          actualUser={actualUser}
+          msg={{
+            ...c,
+            resend,
+          }}
         />
       ))}
     </div>
